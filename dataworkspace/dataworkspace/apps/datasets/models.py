@@ -737,11 +737,14 @@ class ReferenceDatasetRecordBase(models.Model):
         return self.get_display_name()
 
     def get_display_name(self):
-        return getattr(
-            self,
-            self.reference_dataset.display_name_field.column_name,
-            'Unknown record'
-        )
+        try:
+            return getattr(
+                self,
+                self.reference_dataset.display_name_field.column_name,
+                'Unknown record'
+            )
+        except RecursionError:
+            return 'Unknown record'
 
     def get_identifier(self):
         return getattr(
