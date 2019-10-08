@@ -23,22 +23,6 @@
                 </tr>
               </thead>
               <tbody>
-                {% for record in instance.get_records %}
-                  <tr class="form-row">
-                    {% for field in record.reference_dataset.fields.all %}
-                      {% with record|get_attr:field.column_name as value %}
-                        <td{% if value is None %} style="color: #bfc1c3"{% endif %}>
-                          {{ value|default_if_none:"Not set" }}
-                        </td>
-                      {% endwith %}
-                    {% endfor %}
-                    <td class="edit">
-                      <a href="{% url 'dw-admin:reference-dataset-record-edit' reference_dataset_id=instance.id record_id=record.id %}" class="button">
-                        Edit Record
-                      </a>
-                    </td>
-                  </tr>
-                {% endfor %}
                 <tr class="add-row">
                   <td colspan="{{ instance.fields.count|add:1 }}">
                     <a href="{% url 'dw-admin:reference-dataset-record-add' reference_dataset_id=instance.id %}">
