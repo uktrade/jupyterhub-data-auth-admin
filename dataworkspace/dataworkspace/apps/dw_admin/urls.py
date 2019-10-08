@@ -4,7 +4,8 @@ from dataworkspace.apps.dw_admin.views import (
     ReferenceDatasetAdminEditView,
     ReferenceDatasetAdminDeleteView,
     SourceLinkUploadView,
-    ReferenceDatasetAdminUploadView
+    ReferenceDatasetAdminUploadView,
+    ReferenceDatasetSchemaUpdateView,
 )
 
 urlpatterns = [
@@ -37,5 +38,10 @@ urlpatterns = [
         'app/dataset/<str:dataset_id>/sourcelink/upload/',
         view=SourceLinkUploadView.as_view(),
         name='source-link-upload'
+    ),
+    path(
+        'app/referencedata/schema-update/',
+        view=ReferenceDatasetSchemaUpdateView.as_view(),
+        name='reference-data-schema-update'
     ),
 ]

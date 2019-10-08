@@ -11,10 +11,12 @@ from django.contrib.admin import helpers
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseServerError, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.views import View
 from django.views.generic import FormView, CreateView
 
+from dataworkspace.apps.datasets.model_utils import has_circular_link
 from dataworkspace.apps.datasets.models import (
     ReferenceDataset,
     SourceLink,
@@ -237,6 +239,7 @@ class ReferenceDatasetAdminUploadView(ReferenceDataRecordMixin, FormView):
                 form_field = field.get_form_field()
                 if field.data_type == field_map[header_name].DATA_TYPE_FOREIGN_KEY:
                     # If the column is a "foreign key ensure the linked dataset exists
+                    # and does not create a circular reference
                     link_id = None
                     if value != '':
                         linked_dataset = field_map[header_name].linked_reference_dataset
@@ -246,6 +249,11 @@ class ReferenceDatasetAdminUploadView(ReferenceDataRecordMixin, FormView):
                             errors[header_name] = 'Identifier {} does not exist in linked dataset'.format(
                                 value
                             )
+                        if has_circular_link(reference_dataset, linked_dataset):
+                            errors[header_name] = 'Unable to create circular link to {}'.format(
+                                value
+                            )
+                            link_id = None
                     form_data[field.column_name + '_id'] = link_id
                 else:
                     # Otherwise validate using the associated form field
@@ -367,3 +375,24 @@ class SourceLinkUploadView(UserPassesTestMixin, CreateView):  # pylint: disable=
             'Source link uploaded successfully'
         )
         return reverse('admin:datasets_dataset_change', args=(self._get_dataset().id,))
+
+
+class ReferenceDatasetSchemaUpdateView(View, UserPassesTestMixin):
+    template_name = 'admin/reference_dataset_schema_update_view.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, **kwargs):
+        return render(request, self.template_name, {})
+
+    def post(self, request, **kwargs):
+        for rds in ReferenceDataset.objects.all():
+            rds.increment_schema_version()
+        messages.success(
+            self.request,
+            'Schema version updated for all reference datasets'
+        )
+        return HttpResponseRedirect(
+            reverse('dw-admin:reference-data-schema-update')
+        )

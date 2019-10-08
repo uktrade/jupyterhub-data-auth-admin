@@ -1,0 +1,26 @@
+{% extends "admin/change_form.html" %}
+{% load static admin_urls %}
+{% block extrahead %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+  {{ media }}
+{% endblock %}{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static "data-workspace-admin.css" %}">
+{% endblock extrastyle %}
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='datasets' %}">Datasets</a>
+    &rsaquo; Reference dataset schema incrementer
+  </div>
+{% endblock breadcrumbs %}
+{% block content %}
+  <form method="POST">
+    {% csrf_token %}
+    <p>Use this form to update the schema version for all reference datasets in the system.</p>
+    <button type="submit">
+      Update Schema Versions
+    </button>
+  </form>
+{% endblock content %}
