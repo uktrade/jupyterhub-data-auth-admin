@@ -229,6 +229,7 @@ class SourceDownloadMixin:
         db_object = get_object_or_404(
             self.model,
             id=self.kwargs.get('source_id'),
+            available_in_catalogue=True,
             dataset=find_dataset(
                 self.kwargs.get('group_slug'),
                 self.kwargs.get('set_slug')

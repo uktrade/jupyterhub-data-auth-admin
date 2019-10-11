@@ -175,6 +175,14 @@ class SourceTable(BaseSource):
         blank=False,
         validators=[RegexValidator(regex=r'^[a-zA-Z][a-zA-Z0-9_\.]*$')],
     )
+    available_in_catalogue = models.BooleanField(
+        default=False,
+        help_text='Make this table available to users for download via the catalogue'
+    )
+    available_in_tools = models.BooleanField(
+        default=True,
+        help_text='Make this table available to users via tools'
+    )
 
     class Meta:
         db_table = 'app_sourcetable'
@@ -191,6 +199,10 @@ class SourceView(BaseSource):
         max_length=1024,
         blank=False,
         validators=[RegexValidator(regex=r'^[a-zA-Z][a-zA-Z0-9_\.]*$')],
+    )
+    available_in_catalogue = models.BooleanField(
+        default=True,
+        help_text='Make this view available to users for download via the catalogue'
     )
 
     def get_absolute_url(self):

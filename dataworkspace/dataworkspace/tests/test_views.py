@@ -506,6 +506,7 @@ class TestSourceTableDownloadView(BaseTestCase):
         )
         source_table = factories.SourceTableFactory(
             dataset=dataset,
+            available_in_catalogue=True,
         )
         log_count = EventLog.objects.count()
         response = self._authenticated_get(
@@ -522,12 +523,42 @@ class TestSourceTableDownloadView(BaseTestCase):
             dataset=dataset,
             database=factories.DatabaseFactory(
                 memorable_name='my_database',
-            )
+            ),
+            available_in_catalogue=True,
         )
         response = self._authenticated_get(
             source_table.get_absolute_url()
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_table_not_available_in_catalogue(self):
+        dsn = database_dsn(settings.DATABASES_DATA['my_database'])
+        with connect(dsn) as conn, conn.cursor() as cursor:
+            cursor.execute(
+                '''
+                CREATE TABLE if not exists download_test (field2 int,field1 varchar(255));
+                TRUNCATE TABLE download_test;
+                INSERT INTO download_test VALUES(1, 'record1');
+                INSERT INTO download_test VALUES(2, 'record2');
+                '''
+            )
+
+        dataset = factories.DataSetFactory(
+            user_access_type='REQUIRES_AUTHENTICATION'
+        )
+        source_table = factories.SourceTableFactory(
+            dataset=dataset,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            ),
+            schema='public',
+            table='download_test',
+            available_in_catalogue=False,
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(source_table.get_absolute_url())
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(EventLog.objects.count(), log_count)
 
     def test_table_download(self):
         dsn = database_dsn(settings.DATABASES_DATA['my_database'])
@@ -551,6 +582,7 @@ class TestSourceTableDownloadView(BaseTestCase):
             ),
             schema='public',
             table='download_test',
+            available_in_catalogue=True,
         )
         log_count = EventLog.objects.count()
         response = self._authenticated_get(source_table.get_absolute_url())
@@ -575,6 +607,7 @@ class TestSourceViewDownloadView(BaseTestCase):
         )
         source_view = factories.SourceViewFactory(
             dataset=dataset,
+            available_in_catalogue=True,
         )
         log_count = EventLog.objects.count()
         response = self._authenticated_get(
@@ -585,20 +618,51 @@ class TestSourceViewDownloadView(BaseTestCase):
 
     def test_missing_view(self):
         dataset = factories.DataSetFactory(
-            user_access_type='REQUIRES_AUTHENTICATION'
+            user_access_type='REQUIRES_AUTHENTICATION',
         )
         source_view = factories.SourceViewFactory(
             dataset=dataset,
             database=factories.DatabaseFactory(
                 memorable_name='my_database',
-            )
+            ),
+            available_in_catalogue=True,
         )
         response = self._authenticated_get(
             source_view.get_absolute_url()
         )
         self.assertEqual(response.status_code, 404)
 
-    def test_table_download(self):
+    def test_view_not_available_in_catalogue(self):
+        dsn = database_dsn(settings.DATABASES_DATA['my_database'])
+        with connect(dsn) as conn, conn.cursor() as cursor:
+            cursor.execute(
+                '''
+                CREATE TABLE if not exists download_test_table (field2 int,field1 varchar(255));
+                TRUNCATE TABLE download_test_table;
+                INSERT INTO download_test_table VALUES(1, 'record1');
+                INSERT INTO download_test_table VALUES(2, 'record2');
+                CREATE OR REPLACE VIEW download_test_view AS SELECT * FROM download_test_table;
+                '''
+            )
+
+        dataset = factories.DataSetFactory(
+            user_access_type='REQUIRES_AUTHENTICATION',
+        )
+        source_view = factories.SourceViewFactory(
+            dataset=dataset,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            ),
+            schema='public',
+            view='download_test_view',
+            available_in_catalogue=False
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(source_view.get_absolute_url())
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(EventLog.objects.count(), log_count)
+
+    def test_view_download(self):
         dsn = database_dsn(settings.DATABASES_DATA['my_database'])
         with connect(dsn) as conn, conn.cursor() as cursor:
             cursor.execute(
@@ -621,6 +685,7 @@ class TestSourceViewDownloadView(BaseTestCase):
             ),
             schema='public',
             view='download_test_view',
+            available_in_catalogue=True,
         )
         log_count = EventLog.objects.count()
         response = self._authenticated_get(source_view.get_absolute_url())
@@ -670,6 +735,7 @@ class TestCustomQueryDownloadView(BaseTestCase):
         dataset = factories.DataSetFactory(user_access_type='REQUIRES_AUTHORIZATION')
         source_table = factories.SourceTableFactory(
             dataset=dataset,
+            available_in_catalogue=True,
         )
         log_count = EventLog.objects.count()
         response = self._authenticated_get(

@@ -196,6 +196,7 @@ def can_access_schema_table(user, database, schema, table):
         schema=schema,
         table=table,
         database__memorable_name=database,
+        available_in_catalogue=True,
     )
     has_source_table_perms = DataSet.objects.filter(
         Q(published=True) &
@@ -210,10 +211,10 @@ def can_access_schema_table(user, database, schema, table):
 
 def source_tables_for_user(user):
     return SourceTable.objects.filter(
-        Q(dataset__published=True) & (
-            Q(dataset__user_access_type='REQUIRES_AUTHENTICATION') |
-            Q(dataset__datasetuserpermission__user=user)
-        )
+        Q(dataset__user_access_type='REQUIRES_AUTHENTICATION') |
+        Q(dataset__datasetuserpermission__user=user),
+        available_in_tools=True,
+        dataset__published=True,
     ).order_by('database__memorable_name', 'schema', 'table', 'id')
 
 
