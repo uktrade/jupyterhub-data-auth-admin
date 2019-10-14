@@ -5,8 +5,11 @@ from django.db import connection, connections, ProgrammingError
 from django.db.models import ProtectedError
 
 from dataworkspace.apps.core.models import Database
-from dataworkspace.apps.datasets.models import DataGrouping, ReferenceDataset, \
-    ReferenceDatasetField, SourceLink
+from dataworkspace.apps.core.utils import can_access_schema_table, source_tables_for_user
+from dataworkspace.apps.datasets.models import (
+    DataGrouping, ReferenceDataset,
+    ReferenceDatasetField, SourceLink, DataSetUserPermission,
+)
 from dataworkspace.tests import factories
 from dataworkspace.tests.common import BaseTestCase
 
@@ -1325,3 +1328,60 @@ class TestExternalModels(BaseModelsTests):
                 database='test_external_db'
             )
         )
+
+
+class TestUserDatasetPermissions(BaseTestCase):
+    databases = ['default', 'my_database']
+
+    def _create_table(self):
+        dataset = factories.DataSetFactory.create(
+            user_access_type='REQUIRES_AUTHORIZATION',
+        )
+        return factories.SourceTableFactory.create(
+            dataset=dataset,
+            available_in_tools=True,
+            available_in_catalogue=True,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            )
+        )
+
+    def test_user_can_access_schema_table(self):
+        table = self._create_table()
+        perm = DataSetUserPermission.objects.create(
+            user=self.user,
+            dataset=table.dataset,
+            can_download_master=False,
+            can_download_outputs=False,
+            can_access_master_in_tools=False,
+        )
+
+        # Test user without 'can_access_master_in_tools' permission cannot access schema table
+        self.assertFalse(
+            can_access_schema_table(self.user, table.database, table.schema, table.table)
+        )
+
+        # Test user with 'can_access_master_in_tools' permission can access schema table
+        perm.can_access_master_in_tools = True
+        perm.save()
+        self.assertTrue(
+            can_access_schema_table(self.user, table.database, table.schema, table.table)
+        )
+
+    def test_source_tables_for_user(self):
+        table = self._create_table()
+        perm = DataSetUserPermission.objects.create(
+            user=self.user,
+            dataset=table.dataset,
+            can_download_master=False,
+            can_download_outputs=False,
+            can_access_master_in_tools=False,
+        )
+
+        # Test user without 'can_access_master_in_tools' permission cannot see table
+        self.assertNotIn(table, source_tables_for_user(self.user))
+
+        # Test user with 'can_access_master_in_tools' permission can see table
+        perm.can_access_master_in_tools = True
+        perm.save()
+        self.assertIn(table, source_tables_for_user(self.user))

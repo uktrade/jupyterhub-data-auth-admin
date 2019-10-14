@@ -115,10 +115,6 @@ class DataSet(TimeStampedModel):
     def __str__(self):
         return f'{self.grouping.name} - {self.name}'
 
-    def user_has_access(self, user):
-        return self.user_access_type == 'REQUIRES_AUTHENTICATION' or \
-            self.datasetuserpermission_set.filter(user=user).exists()
-
 
 class DataSetUserPermission(models.Model):
     user = models.ForeignKey(
@@ -128,6 +124,18 @@ class DataSetUserPermission(models.Model):
     dataset = models.ForeignKey(
         DataSet,
         on_delete=models.CASCADE,
+    )
+    can_download_master = models.BooleanField(
+        default=False,
+        help_text='User can download master dataset via the catalogue'
+    )
+    can_download_outputs = models.BooleanField(
+        default=True,
+        help_text='User can download outputs via the catalogue'
+    )
+    can_access_master_in_tools = models.BooleanField(
+        default=False,
+        help_text='User can access master dataset from within tools'
     )
 
     class Meta:
@@ -193,6 +201,16 @@ class SourceTable(BaseSource):
             args=(self.dataset.grouping.slug, self.dataset.slug, self.id)
         )
 
+    def user_has_download_access(self, user):
+        return (
+            self.dataset.user_access_type == 'REQUIRES_AUTHENTICATION'
+            or
+            self.dataset.datasetuserpermission_set.filter(
+                user=user,
+                can_download_master=True
+            ).exists()
+        )
+
 
 class SourceView(BaseSource):
     view = models.CharField(
@@ -209,6 +227,16 @@ class SourceView(BaseSource):
         return reverse(
             'catalogue:dataset_source_view_download',
             args=(self.dataset.grouping.slug, self.dataset.slug, self.id)
+        )
+
+    def user_has_download_access(self, user):
+        return (
+            self.dataset.user_access_type == 'REQUIRES_AUTHENTICATION'
+            or
+            self.dataset.datasetuserpermission_set.filter(
+                user=user,
+                can_download_outputs=True
+            ).exists()
         )
 
 
@@ -297,6 +325,16 @@ class SourceLink(TimeStampedModel):
             args=(self.dataset.grouping.slug, self.dataset.slug, self.id)
         )
 
+    def user_has_download_access(self, user):
+        return (
+            self.dataset.user_access_type == 'REQUIRES_AUTHENTICATION'
+            or
+            self.dataset.datasetuserpermission_set.filter(
+                user=user,
+                can_download_outputs=True
+            ).exists()
+        )
+
 
 class CustomDatasetQuery(TimeStampedModel):
     FREQ_DAILY = 1
@@ -329,6 +367,16 @@ class CustomDatasetQuery(TimeStampedModel):
 
     def get_filename(self):
         return '{}.csv'.format(slugify(self.name))
+
+    def user_has_download_access(self, user):
+        return (
+            self.dataset.user_access_type == 'REQUIRES_AUTHENTICATION'
+            or
+            self.dataset.datasetuserpermission_set.filter(
+                user=user,
+                can_download_outputs=True
+            ).exists()
+        )
 
 
 class ReferenceDataset(DeletableTimestampedUserModel):

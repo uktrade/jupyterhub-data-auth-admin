@@ -9,7 +9,7 @@ from psycopg2 import connect
 import mock
 
 from dataworkspace.apps.core.utils import database_dsn
-from dataworkspace.apps.datasets.models import SourceLink
+from dataworkspace.apps.datasets.models import SourceLink, DataSetUserPermission
 from dataworkspace.apps.eventlog.models import EventLog
 from dataworkspace.tests import factories
 from dataworkspace.tests.common import BaseTestCase
@@ -418,6 +418,74 @@ class TestSourceLinkDownloadView(BaseTestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(EventLog.objects.count(), log_count)
 
+    def test_no_download_permission(self):
+        group = factories.DataGroupingFactory.create()
+        dataset = factories.DataSetFactory.create(
+            grouping=group,
+            published=True,
+            user_access_type='REQUIRES_AUTHORIZATION',
+        )
+        DataSetUserPermission.objects.create(
+            dataset=dataset,
+            user=self.user,
+            can_download_outputs=False,
+        )
+        link = factories.SourceLinkFactory(
+            id='158776ec-5c40-4c58-ba7c-a3425905ec45',
+            dataset=dataset,
+            link_type=SourceLink.TYPE_EXTERNAL,
+            url='http://example.com'
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(
+            reverse(
+                'catalogue:dataset_source_link_download',
+                kwargs={
+                    'group_slug': group.slug,
+                    'set_slug': dataset.slug,
+                    'source_link_id': link.id
+                }
+            )
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(EventLog.objects.count(), log_count)
+
+    def test_download_with_authorization(self):
+        group = factories.DataGroupingFactory.create()
+        dataset = factories.DataSetFactory.create(
+            grouping=group,
+            published=True,
+            user_access_type='REQUIRES_AUTHORIZATION',
+        )
+        DataSetUserPermission.objects.create(
+            dataset=dataset,
+            user=self.user,
+            can_download_outputs=True,
+        )
+        link = factories.SourceLinkFactory(
+            id='158776ec-5c40-4c58-ba7c-a3425905ec45',
+            dataset=dataset,
+            link_type=SourceLink.TYPE_EXTERNAL,
+            url='http://example.com'
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(
+            reverse(
+                'catalogue:dataset_source_link_download',
+                kwargs={
+                    'group_slug': group.slug,
+                    'set_slug': dataset.slug,
+                    'source_link_id': link.id
+                }
+            )
+        )
+        self.assertRedirects(response, 'http://example.com', fetch_redirect_response=False)
+        self.assertEqual(EventLog.objects.count(), log_count + 1)
+        self.assertEqual(
+            EventLog.objects.latest().event_type,
+            EventLog.TYPE_DATASET_SOURCE_LINK_DOWNLOAD
+        )
+
     def test_download_external_file(self):
         group = factories.DataGroupingFactory.create()
         dataset = factories.DataSetFactory.create(
@@ -507,6 +575,34 @@ class TestSourceTableDownloadView(BaseTestCase):
         source_table = factories.SourceTableFactory(
             dataset=dataset,
             available_in_catalogue=True,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            )
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(
+            source_table.get_absolute_url()
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(EventLog.objects.count(), log_count)
+
+    def test_no_download_permission(self):
+        dataset = factories.DataSetFactory(
+            user_access_type='REQUIRES_AUTHORIZATION'
+        )
+        DataSetUserPermission.objects.create(
+            dataset=dataset,
+            user=self.user,
+            can_download_master=False,
+        )
+        source_table = factories.SourceTableFactory(
+            dataset=dataset,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            ),
+            schema='public',
+            table='download_test',
+            available_in_catalogue=True,
         )
         log_count = EventLog.objects.count()
         response = self._authenticated_get(
@@ -560,7 +656,48 @@ class TestSourceTableDownloadView(BaseTestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(EventLog.objects.count(), log_count)
 
-    def test_table_download(self):
+    def test_table_download_with_authorization(self):
+        dsn = database_dsn(settings.DATABASES_DATA['my_database'])
+        with connect(dsn) as conn, conn.cursor() as cursor:
+            cursor.execute(
+                '''
+                CREATE TABLE if not exists download_test (field2 int,field1 varchar(255));
+                TRUNCATE TABLE download_test;
+                INSERT INTO download_test VALUES(1, 'record1');
+                INSERT INTO download_test VALUES(2, 'record2');
+                '''
+            )
+        dataset = factories.DataSetFactory(
+            user_access_type='REQUIRES_AUTHORIZATION'
+        )
+        DataSetUserPermission.objects.create(
+            dataset=dataset,
+            user=self.user,
+            can_download_master=True,
+        )
+        source_table = factories.SourceTableFactory(
+            dataset=dataset,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            ),
+            schema='public',
+            table='download_test',
+            available_in_catalogue=True,
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(source_table.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            b''.join(response.streaming_content),
+            b'field2,field1\r\n1,record1\r\n2,record2\r\nNumber of rows: 2\r\n'
+        )
+        self.assertEqual(EventLog.objects.count(), log_count + 1)
+        self.assertEqual(
+            EventLog.objects.latest().event_type,
+            EventLog.TYPE_DATASET_SOURCE_TABLE_DOWNLOAD
+        )
+
+    def test_table_download_with_authentication(self):
         dsn = database_dsn(settings.DATABASES_DATA['my_database'])
         with connect(dsn) as conn, conn.cursor() as cursor:
             cursor.execute(
@@ -616,6 +753,31 @@ class TestSourceViewDownloadView(BaseTestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(EventLog.objects.count(), log_count)
 
+    def test_no_download_permission(self):
+        dataset = factories.DataSetFactory(
+            user_access_type='REQUIRES_AUTHORIZATION'
+        )
+        DataSetUserPermission.objects.create(
+            dataset=dataset,
+            user=self.user,
+            can_download_outputs=False,
+        )
+        source_view = factories.SourceViewFactory(
+            dataset=dataset,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            ),
+            schema='public',
+            view='download_test',
+            available_in_catalogue=True,
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(
+            source_view.get_absolute_url()
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(EventLog.objects.count(), log_count)
+
     def test_missing_view(self):
         dataset = factories.DataSetFactory(
             user_access_type='REQUIRES_AUTHENTICATION',
@@ -662,7 +824,49 @@ class TestSourceViewDownloadView(BaseTestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(EventLog.objects.count(), log_count)
 
-    def test_view_download(self):
+    def test_view_download_with_authorization(self):
+        dsn = database_dsn(settings.DATABASES_DATA['my_database'])
+        with connect(dsn) as conn, conn.cursor() as cursor:
+            cursor.execute(
+                '''
+                CREATE TABLE if not exists download_test (field2 int,field1 varchar(255));
+                TRUNCATE TABLE download_test;
+                INSERT INTO download_test VALUES(1, 'record1');
+                INSERT INTO download_test VALUES(2, 'record2');
+                CREATE OR REPLACE VIEW download_test_view AS SELECT * FROM download_test;
+                '''
+            )
+        dataset = factories.DataSetFactory(
+            user_access_type='REQUIRES_AUTHORIZATION'
+        )
+        DataSetUserPermission.objects.create(
+            dataset=dataset,
+            user=self.user,
+            can_download_outputs=True,
+        )
+        source_view = factories.SourceViewFactory(
+            dataset=dataset,
+            database=factories.DatabaseFactory(
+                memorable_name='my_database',
+            ),
+            schema='public',
+            view='download_test_view',
+            available_in_catalogue=True,
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(source_view.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            b''.join(response.streaming_content),
+            b'field2,field1\r\n1,record1\r\n2,record2\r\nNumber of rows: 2\r\n'
+        )
+        self.assertEqual(EventLog.objects.count(), log_count + 1)
+        self.assertEqual(
+            EventLog.objects.latest().event_type,
+            EventLog.TYPE_DATASET_SOURCE_VIEW_DOWNLOAD
+        )
+
+    def test_view_download_authentication_only(self):
         dsn = database_dsn(settings.DATABASES_DATA['my_database'])
         with connect(dsn) as conn, conn.cursor() as cursor:
             cursor.execute(
@@ -744,6 +948,24 @@ class TestCustomQueryDownloadView(BaseTestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(EventLog.objects.count(), log_count)
 
+    def test_no_download_permission(self):
+        dataset = factories.DataSetFactory(user_access_type='REQUIRES_AUTHORIZATION')
+        source_table = factories.SourceTableFactory(
+            dataset=dataset,
+            available_in_catalogue=True,
+        )
+        DataSetUserPermission.objects.create(
+            dataset=dataset,
+            user=self.user,
+            can_download_outputs=False,
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(
+            source_table.get_absolute_url()
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(EventLog.objects.count(), log_count)
+
     def test_invalid_sql(self):
         query = self._create_query('SELECT * FROM table_that_does_not_exist;')
         self.assertRaises(
@@ -792,7 +1014,27 @@ class TestCustomQueryDownloadView(BaseTestCase):
             cursor.execute('SELECT COUNT(*) FROM custom_query_test')
             self.assertEqual(cursor.fetchone()[0], 3)
 
-    def test_valid_sql(self):
+    def test_download_with_authorization(self):
+        query = self._create_query('SELECT * FROM custom_query_test WHERE id IN (1, 3)')
+        DataSetUserPermission.objects.create(
+            dataset=query.dataset,
+            user=self.user,
+            can_download_outputs=True,
+        )
+        log_count = EventLog.objects.count()
+        response = self._authenticated_get(query.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            b''.join(response.streaming_content),
+            b'id,name,date\r\n1,the first record,\r\n3,the last record,\r\nNumber of rows: 2\r\n'
+        )
+        self.assertEqual(EventLog.objects.count(), log_count + 1)
+        self.assertEqual(
+            EventLog.objects.latest().event_type,
+            EventLog.TYPE_DATASET_CUSTOM_QUERY_DOWNLOAD
+        )
+
+    def test_download_with_authentication(self):
         query = self._create_query('SELECT * FROM custom_query_test WHERE id IN (1, 3)')
         log_count = EventLog.objects.count()
         response = self._authenticated_get(query.get_absolute_url())
