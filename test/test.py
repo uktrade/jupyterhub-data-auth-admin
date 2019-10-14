@@ -886,6 +886,7 @@ async def create_private_dataset():
             database=Database.objects.get(memorable_name="my_database"),
             schema="public",
             table="auth_user",
+            available_in_catalogue=True
         )
         """).encode('ascii')
 
@@ -918,6 +919,7 @@ async def give_user_dataset_perms():
         DataSetUserPermission.objects.create(
             dataset=dataset,
             user=user,
+            can_download_master=True
         )
         """).encode('ascii')
 

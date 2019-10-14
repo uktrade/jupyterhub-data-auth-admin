@@ -204,7 +204,7 @@ def can_access_schema_table(user, database, schema, table):
             Q(user_access_type='REQUIRES_AUTHENTICATION') |
             Q(
                 datasetuserpermission__user=user,
-                datasetuserpermission__can_access_master_in_tools=True
+                datasetuserpermission__can_download_master=True
             )
         ),
     ).exists()
