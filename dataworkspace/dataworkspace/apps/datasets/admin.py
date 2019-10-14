@@ -83,6 +83,7 @@ class DataSetAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     list_display = ('name', 'slug', 'short_description', 'grouping', 'published')
     list_filter = ('grouping', )
+    search_fields = ('name',)
     inlines = [
         SourceLinkInline,
         SourceTableInline,

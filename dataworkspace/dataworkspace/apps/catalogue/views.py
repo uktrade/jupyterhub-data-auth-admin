@@ -69,15 +69,25 @@ def datagroup_item_view(request, slug):
 @require_GET
 def dataset_full_path_view(request, group_slug, set_slug):
     dataset = find_dataset(group_slug, set_slug)
-
+    source_tables = dataset.sourcetable_set.filter(available_in_catalogue=True)
+    source_views = dataset.sourceview_set.filter(available_in_catalogue=True)
+    user_perms = dataset.datasetuserpermission_set.filter(user=request.user).first()
     context = {
         'model': dataset,
-        'has_download_access': dataset.user_has_access(request.user),
+        'requires_authorization': (
+            dataset.user_access_type == 'REQUIRES_AUTHORIZATION' and (
+                not user_perms or (
+                    (source_tables.exists() and not user_perms.can_download_master) or
+                    (source_views.exists() and not user_perms.can_download_outputs)
+                )
+            )
+        ),
         'data_links': sorted(
             chain(
-                dataset.sourcelink_set.all(),
-                dataset.sourcetable_set.all(),
-                dataset.customdatasetquery_set.all()
+                source_tables,
+                source_views,
+                dataset.sourcelink_set.filter(available_in_catalogue=True),
+                dataset.customdatasetquery_set.filter(available_in_catalogue=True)
             ),
             key=lambda x: x.name
         )
@@ -167,14 +177,14 @@ class SourceLinkDownloadView(DetailView):
             self.kwargs.get('set_slug')
         )
 
-        if not dataset.user_has_access(self.request.user):
-            return HttpResponseForbidden()
-
         source_link = get_object_or_404(
             SourceLink,
             id=self.kwargs.get('source_link_id'),
             dataset=dataset
         )
+
+        if not source_link.user_has_download_access(self.request.user):
+            return HttpResponseForbidden()
 
         log_event(
             request.user,
@@ -236,7 +246,7 @@ class SourceDownloadMixin:
             )
         )
 
-        if not db_object.dataset.user_has_access(self.request.user):
+        if not db_object.user_has_download_access(self.request.user):
             return HttpResponseForbidden()
 
         if not self.db_object_exists(db_object):
@@ -305,14 +315,14 @@ class CustomDatasetQueryDownloadView(DetailView):
             self.kwargs.get('set_slug')
         )
 
-        if not dataset.user_has_access(self.request.user):
-            return HttpResponseForbidden()
-
         query = get_object_or_404(
             self.model,
             id=self.kwargs.get('query_id'),
             dataset=dataset
         )
+
+        if not query.user_has_download_access(self.request.user):
+            return HttpResponseForbidden()
 
         log_event(
             request.user,

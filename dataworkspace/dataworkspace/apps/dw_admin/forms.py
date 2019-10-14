@@ -316,7 +316,7 @@ class DataSetForm(forms.ModelForm):
 
 class SourceLinkForm(forms.ModelForm):
     class Meta:
-        fields = ('name', 'url', 'format', 'frequency')
+        fields = ('name', 'url', 'format', 'frequency', 'available_in_catalogue')
         model = SourceLink
 
 

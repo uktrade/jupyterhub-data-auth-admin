@@ -131,6 +131,12 @@ class AppStreamFilter(admin.SimpleListFilter):
         return queryset
 
 
+class DatasetUserPermissionInline(admin.TabularInline):
+    model = DataSetUserPermission
+    extra = 0
+    autocomplete_fields = ['dataset']
+
+
 @admin.register(get_user_model())
 class AppUserAdmin(UserAdmin):
     add_form_template = 'admin/change_form.html'
@@ -160,10 +166,12 @@ class AppUserAdmin(UserAdmin):
                 'can_access_appstream',
                 'is_staff',
                 'is_superuser',
-                'authorized_datasets',
             ]}),
     ]
     readonly_fields = ['sso_id']
+    inlines = [
+        DatasetUserPermissionInline,
+    ]
 
     @transaction.atomic
     def save_model(self, request, obj, form, change):
@@ -210,25 +218,6 @@ class AppUserAdmin(UserAdmin):
             elif access_appstream_permission in obj.user_permissions.all():
                 obj.user_permissions.remove(access_appstream_permission)
                 log_change('Removed can_access_appstream permission')
-
-        if 'authorized_datasets' in form.cleaned_data:
-            current_datasets = DataSet.objects.filter(
-                datasetuserpermission__user=obj,
-            )
-            for dataset in form.cleaned_data['authorized_datasets']:
-                if dataset not in current_datasets.all():
-                    DataSetUserPermission.objects.create(
-                        dataset=dataset,
-                        user=obj,
-                    )
-                    log_change('Added dataset {} permission'.format(dataset))
-            for dataset in current_datasets:
-                if dataset not in form.cleaned_data['authorized_datasets']:
-                    DataSetUserPermission.objects.filter(
-                        dataset=dataset,
-                        user=obj,
-                    ).delete()
-                    log_change('Removed dataset {} permission'.format(dataset))
 
         super().save_model(request, obj, form, change)
 

@@ -142,6 +142,9 @@ class DataSetUserPermission(models.Model):
         db_table = 'app_datasetuserpermission'
         unique_together = ('user', 'dataset')
 
+    def __str__(self):
+        return 'User permissions for dataset {}'.format(self.dataset.name)
+
 
 class BaseSource(TimeStampedModel):
     id = models.UUIDField(
@@ -202,7 +205,7 @@ class SourceTable(BaseSource):
         )
 
     def user_has_download_access(self, user):
-        return (
+        return self.available_in_catalogue and (
             self.dataset.user_access_type == 'REQUIRES_AUTHENTICATION'
             or
             self.dataset.datasetuserpermission_set.filter(
@@ -230,7 +233,7 @@ class SourceView(BaseSource):
         )
 
     def user_has_download_access(self, user):
-        return (
+        return self.available_in_catalogue and (
             self.dataset.user_access_type == 'REQUIRES_AUTHENTICATION'
             or
             self.dataset.datasetuserpermission_set.filter(
@@ -269,6 +272,10 @@ class SourceLink(TimeStampedModel):
     url = models.CharField(max_length=256)
     format = models.CharField(blank=False, null=False, max_length=10)
     frequency = models.CharField(blank=False, null=False, max_length=50)
+    available_in_catalogue = models.BooleanField(
+        default=True,
+        help_text='Make this link available to users for download via the catalogue'
+    )
 
     class Meta:
         db_table = 'app_sourcelink'
@@ -354,6 +361,10 @@ class CustomDatasetQuery(TimeStampedModel):
     database = models.ForeignKey(Database, on_delete=models.CASCADE)
     query = models.TextField()
     frequency = models.IntegerField(choices=_FREQ_CHOICES)
+    available_in_catalogue = models.BooleanField(
+        default=True,
+        help_text='Make this report available to users for download via the catalogue'
+    )
 
     class Meta:
         verbose_name = 'SQL Query'

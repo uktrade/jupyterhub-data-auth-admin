@@ -1,6 +1,5 @@
 {% extends '_base.html' %}
-{% load humanize %}
-{% load static %}
+{% load humanize static dataset_tags %}
 
 {% block page_title %}{{ model.name }} - {{ model.grouping.name }} - {{ block.super }}{% endblock %}
 
@@ -46,21 +45,18 @@
     <div class="govuk-grid-row" style="overflow-x: auto;">
         <div class="govuk-grid-column-full">
             <h2 class="govuk-heading-l govuk-!-margin-top-8">Data Links</h2>
-
-            {% if data_links %}
-                {% if not has_download_access %}
-                    <div class="govuk-warning-text">
-                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-                        <div class="govuk-warning-text__text">
-                            <strong>
-                                <span class="govuk-warning-text__assistive">Warning</span>
-                                You do not have permission to access these links.
-                                <br>
-                                <a class="govuk-link--no-visited-state" href="{% url 'datasets:request_access' model.grouping.slug model.slug %}">Request access</a>
-                            </strong>
-                        </div>
+            {% if requires_authorization %}
+                <div class="govuk-warning-text">
+                    <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+                    <div class="govuk-warning-text__text">
+                        <strong>
+                            <span class="govuk-warning-text__assistive">Warning</span>
+                            You do not have permission to access these links.
+                            <br>
+                            <a class="govuk-link--no-visited-state" href="{% url 'datasets:request_access' model.grouping.slug model.slug %}">Request access</a>
+                        </strong>
                     </div>
-                {% endif %}
+                </div>
             {% endif %}
 
             <table class="govuk-table">
@@ -77,12 +73,12 @@
                 {% for link in data_links %}
                     <tr class="govuk-table__row">
                         <td class="govuk-table__cell">
-                            {% if not has_download_access %}
-                                {{ link.name }}
-                            {% else %}
+                            {% if user|can_download_source:link %}
                                 <a class="govuk-link" href="{{ link.get_absolute_url }}">
                                     {{ link.name }}
                                 </a>
+                            {% else %}
+                                {{ link.name }}
                             {% endif %}
                         </td>
                         <td class="govuk-table__cell">
