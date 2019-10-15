@@ -1356,13 +1356,13 @@ class TestUserDatasetPermissions(BaseTestCase):
             can_access_master_in_tools=False,
         )
 
-        # Test user without 'can_access_master_in_tools' permission cannot access schema table
+        # Test user without 'can_download_master' permission cannot access schema table
         self.assertFalse(
             can_access_schema_table(self.user, table.database, table.schema, table.table)
         )
 
-        # Test user with 'can_access_master_in_tools' permission can access schema table
-        perm.can_access_master_in_tools = True
+        # Test user with 'can_download_master' permission can access schema table
+        perm.can_download_master = True
         perm.save()
         self.assertTrue(
             can_access_schema_table(self.user, table.database, table.schema, table.table)
