@@ -19,5 +19,8 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             'alter table public.app_datasetuserpermission drop column if exists can_download_outputs'
         ),
+        migrations.RunSQL(
+            'alter table public.datasets_customdatasetquery drop column if exists available_in_catalogue'
+        ),
 
     ]
