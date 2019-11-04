@@ -129,3 +129,4 @@ class ApplicationTemplateFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = 'applications.ApplicationTemplate'
+        django_get_or_create = ('name',)
