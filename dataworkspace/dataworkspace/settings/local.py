@@ -1,13 +1,15 @@
 from dataworkspace.settings.base import *  # noqa: F403, F401
 from dataworkspace.settings.base import env
 
+DEBUG = True
+
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'dataworkspace',
+        'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD': '',
+        'PASSWORD': 'postgres',
         'HOST': 'localhost',
         'PORT': '5432',
     },
@@ -15,11 +17,8 @@ DATABASES = {
         database_name: {
             'ENGINE': 'django_db_geventpool.backends.postgresql_psycopg2',
             'CONN_MAX_AGE': 0,
-            'NAME': 'dataworkspace',
-            'HOST': 'localhost',
-            'USER': 'postgres',
-            'PASSSWORD': '',
-            'PORT': '5432',
+            **database,
+            'OPTIONS': {'sslmode': 'require', 'MAX_CONNS': 100},
         }
         for database_name, database in env['DATA_DB'].items()
     },
