@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Trigger when a user creates tables in their own schema using CREATE TABLE AS, so they are accessible in other tools
+- Request access, eligibility criteria and view/link/query/reference data download URLs are now prefixed by the dataset
+  URL (e.g. `/datasets/<UUID>/request-access`).
+- Dataset group references are removed from user-facing pages.
+- Data group editing is removed from the admin interface.
 
 ### Added
 
