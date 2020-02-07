@@ -124,16 +124,15 @@ class DatasetDetailView(DetailView):
         return isinstance(self.object, ReferenceDataset)
 
     def get_object(self, queryset=None):
+        filters = {'published': True} if not self.request.user.is_superuser else {}
         try:
             return ReferenceDataset.objects.live().get(
-                uuid=self.kwargs['dataset_uuid'], published=True
+                uuid=self.kwargs['dataset_uuid'], **filters
             )
         except ReferenceDataset.DoesNotExist:
             pass
 
-        return get_object_or_404(
-            DataSet, published=True, id=self.kwargs['dataset_uuid']
-        )
+        return get_object_or_404(DataSet, id=self.kwargs['dataset_uuid'], **filters)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
@@ -197,7 +196,7 @@ class DatasetDetailView(DetailView):
 
 @require_http_methods(['GET', 'POST'])
 def eligibility_criteria_view(request, dataset_uuid):
-    dataset = find_dataset(dataset_uuid)
+    dataset = find_dataset(dataset_uuid, request.user)
 
     if request.method == 'POST':
         form = EligibilityCriteriaForm(request.POST)
@@ -218,14 +217,14 @@ def eligibility_criteria_view(request, dataset_uuid):
 
 @require_GET
 def eligibility_criteria_not_met_view(request, dataset_uuid):
-    dataset = find_dataset(dataset_uuid)
+    dataset = find_dataset(dataset_uuid, request.user)
 
     return render(request, 'eligibility_criteria_not_met.html', {'dataset': dataset})
 
 
 @require_http_methods(['GET', 'POST'])
 def request_access_view(request, dataset_uuid):
-    dataset = find_dataset(dataset_uuid)
+    dataset = find_dataset(dataset_uuid, request.user)
 
     if request.method == 'POST':
         form = RequestAccessForm(request.POST)
@@ -271,7 +270,7 @@ def request_access_success_view(request, dataset_uuid):
     ticket = request.GET['ticket']
     dataset_uuid = request.GET['set']
 
-    dataset = find_dataset(dataset_uuid)
+    dataset = find_dataset(dataset_uuid, request.user)
 
     return render(
         request, 'request_access_success.html', {'ticket': ticket, 'dataset': dataset}
@@ -284,9 +283,9 @@ class ReferenceDatasetDownloadView(DetailView):
     def get_object(self, queryset=None):
         return get_object_or_404(
             ReferenceDataset,
-            published=True,
-            deleted=False,
             uuid=self.kwargs.get('dataset_uuid'),
+            deleted=False,
+            **{'published': True} if not self.request.user.is_superuser else {},
         )
 
     def get(self, request, *args, **kwargs):
@@ -351,7 +350,7 @@ class SourceLinkDownloadView(DetailView):
     model = SourceLink
 
     def get(self, request, *args, **kwargs):
-        dataset = find_dataset(self.kwargs.get('dataset_uuid'))
+        dataset = find_dataset(self.kwargs.get('dataset_uuid'), request.user)
 
         if not dataset.user_has_access(self.request.user):
             return HttpResponseForbidden()
@@ -407,7 +406,7 @@ class SourceDownloadMixin:
         raise NotImplementedError()
 
     def get(self, request, *_, **__):
-        dataset = find_dataset(self.kwargs.get('dataset_uuid'))
+        dataset = find_dataset(self.kwargs.get('dataset_uuid'), request.user)
         db_object = get_object_or_404(
             self.model, id=self.kwargs.get('source_id'), dataset=dataset
         )
@@ -452,7 +451,7 @@ class CustomDatasetQueryDownloadView(DetailView):
     model = CustomDatasetQuery
 
     def get(self, request, *args, **kwargs):
-        dataset = find_dataset(self.kwargs.get('dataset_uuid'))
+        dataset = find_dataset(self.kwargs.get('dataset_uuid'), request.user)
 
         if not dataset.user_has_access(self.request.user):
             return HttpResponseForbidden()
