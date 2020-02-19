@@ -27,3 +27,12 @@ check:
 .PHONY: format
 format:
 	black --exclude=venv --skip-string-normalization .
+
+
+.PHONY: services-up
+services-up: docker-build
+	docker-compose -f docker-compose-dev.yml -p data-workspace up data-workspace-postgres data-workspace-redis
+
+.PHONY: services-down
+services-down:
+	docker-compose -f docker-compose-dev.yml -p data-workspace down

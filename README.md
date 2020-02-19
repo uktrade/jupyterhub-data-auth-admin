@@ -51,6 +51,22 @@ Django tests
 make docker-test-unit
 ```
 
+### Running tests locally
+During development it can be easier to run the tests locally, so that you can have a faster code/test/debug feedback loop. Data Workspace needs postgres and redis instances to run, and also
+needs to resolve some hostnames in order to function properly. To run the services needed for development, use `make services-up`. Conversely, `makes services-down` when you're done. Add
+the following entries to your `/etc/hosts` file so that test/service hosts loop back to localhost:
+
+```
+127.0.0.1	dataworkspace.test
+127.0.0.1	dataworkspace.testtestapplication-23b40dd9.dataworkspace.test
+127.0.0.1	testvisualisation.dataworkspace.test testvisualisation-a.dataworkspace.test testvisualisation-b.dataworkspace.test
+127.0.0.1	data-workspace-postgres data-workspace-redis
+```
+
+You can use the `./run-tests.sh` script to quickly run unit tests:
+
+`./run-tests.sh -t`. Append any arguments you want to pass to `pytest`, e.g. `./run-tests.sh -t -vvvv -kMySingleTestCase --pdb`
+
 
 # Infrastructure
 
