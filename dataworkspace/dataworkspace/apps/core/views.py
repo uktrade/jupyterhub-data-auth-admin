@@ -65,63 +65,37 @@ class SupportView(FormView):
 
     def form_valid(self, form):
         cleaned = form.cleaned_data
-        ticket_id = create_support_request(
-            self.request.user, cleaned['email'], cleaned['message']
-        )
-        return HttpResponseRedirect(
-            reverse('support-success', kwargs={'ticket_id': ticket_id})
-        )
+        ticket_id = create_support_request(self.request.user, cleaned['email'], cleaned['message'])
+        return HttpResponseRedirect(reverse('support-success', kwargs={'ticket_id': ticket_id}))
 
 
 def table_data_view(request, database, schema, table):
     logger.info(
-        'table_data_view attempt: %s %s %s %s',
-        request.user.email,
-        database,
-        schema,
-        table,
+        'table_data_view attempt: %s %s %s %s', request.user.email, database, schema, table,
     )
 
     log_event(
         request.user,
         EventLog.TYPE_DATASET_TABLE_DATA_DOWNLOAD,
-        extra={
-            'path': request.get_full_path(),
-            'database': database,
-            'schema': schema,
-            'table': table,
-        },
+        extra={'path': request.get_full_path(), 'database': database, 'schema': schema, 'table': table,},
     )
 
     if request.method != 'GET':
         return HttpResponseNotAllowed(['GET'])
     elif not can_access_schema_table(request.user, database, schema, table):
         return HttpResponseForbidden()
-    elif not (
-        view_exists(database, schema, table) or table_exists(database, schema, table)
-    ):
+    elif not (view_exists(database, schema, table) or table_exists(database, schema, table)):
         return HttpResponseNotFound()
     else:
         return table_data(request.user.email, database, schema, table)
 
 
 def file_browser_html_view(request):
-    return (
-        file_browser_html_GET(request)
-        if request.method == 'GET'
-        else HttpResponse(status=405)
-    )
+    return file_browser_html_GET(request) if request.method == 'GET' else HttpResponse(status=405)
 
 
-@csp_update(
-    CONNECT_SRC=[settings.APPLICATION_ROOT_DOMAIN, "https://s3.eu-west-2.amazonaws.com"]
-)
+@csp_update(CONNECT_SRC=[settings.APPLICATION_ROOT_DOMAIN, "https://s3.eu-west-2.amazonaws.com"])
 def file_browser_html_GET(request):
     prefix = get_s3_prefix(str(request.user.profile.sso_id))
 
-    return render(
-        request,
-        'files.html',
-        {'prefix': prefix, 'bucket': settings.NOTEBOOKS_BUCKET},
-        status=200,
-    )
+    return render(request, 'files.html', {'prefix': prefix, 'bucket': settings.NOTEBOOKS_BUCKET}, status=200,)

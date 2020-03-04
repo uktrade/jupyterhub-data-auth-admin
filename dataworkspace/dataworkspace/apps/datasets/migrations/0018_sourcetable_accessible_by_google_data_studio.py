@@ -11,8 +11,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sourcetable',
             name='accessible_by_google_data_studio',
-            field=models.BooleanField(
-                default=False, help_text='Only Superusers can access the data'
-            ),
+            field=models.BooleanField(default=False, help_text='Only Superusers can access the data'),
         )
     ]

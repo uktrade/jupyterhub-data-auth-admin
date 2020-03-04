@@ -8,9 +8,5 @@ class Migration(migrations.Migration):
     dependencies = [('applications', '0011_auto_20190917_1446')]
 
     operations = [
-        migrations.AddField(
-            model_name='applicationtemplate',
-            name='visible',
-            field=models.BooleanField(default=True),
-        )
+        migrations.AddField(model_name='applicationtemplate', name='visible', field=models.BooleanField(default=True),)
     ]

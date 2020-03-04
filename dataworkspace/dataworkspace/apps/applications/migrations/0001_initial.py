@@ -20,29 +20,14 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_date', models.DateTimeField(auto_now_add=True)),
                 ('modified_date', models.DateTimeField(auto_now=True)),
-                (
-                    'id',
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False,),),
                 (
                     'public_host',
                     models.CharField(
-                        help_text='The leftmost part of the domain name of this application',
-                        max_length=63,
+                        help_text='The leftmost part of the domain name of this application', max_length=63,
                     ),
                 ),
-                (
-                    'spawner',
-                    models.CharField(
-                        help_text='The spawner used to start the application',
-                        max_length=15,
-                    ),
-                ),
+                ('spawner', models.CharField(help_text='The spawner used to start the application', max_length=15,),),
                 (
                     'spawner_application_template_options',
                     models.CharField(
@@ -60,11 +45,7 @@ class Migration(migrations.Migration):
                 (
                     'state',
                     models.CharField(
-                        choices=[
-                            ('SPAWNING', 'Spawning'),
-                            ('RUNNING', 'Running'),
-                            ('STOPPED', 'Stopped'),
-                        ],
+                        choices=[('SPAWNING', 'Spawning'), ('RUNNING', 'Running'), ('STOPPED', 'Stopped'),],
                         default='SPAWNING',
                         max_length=16,
                     ),
@@ -72,16 +53,13 @@ class Migration(migrations.Migration):
                 (
                     'proxy_url',
                     models.CharField(
-                        help_text='The URL that the proxy can proxy HTTP and WebSockets requests to',
-                        max_length=256,
+                        help_text='The URL that the proxy can proxy HTTP and WebSockets requests to', max_length=256,
                     ),
                 ),
                 (
                     'single_running_or_spawning_integrity',
                     models.CharField(
-                        help_text='Used internally to avoid duplicate running applications',
-                        max_length=63,
-                        unique=True,
+                        help_text='Used internally to avoid duplicate running applications', max_length=63, unique=True,
                     ),
                 ),
             ],
@@ -98,24 +76,14 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_date', models.DateTimeField(auto_now_add=True)),
                 ('modified_date', models.DateTimeField(auto_now=True)),
-                (
-                    'id',
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False,),),
                 (
                     'name',
                     models.CharField(
                         help_text='Used in URLs: only lowercase letters allowed',
                         max_length=128,
                         unique=True,
-                        validators=[
-                            django.core.validators.RegexValidator(regex='^[a-z]+$')
-                        ],
+                        validators=[django.core.validators.RegexValidator(regex='^[a-z]+$')],
                     ),
                 ),
                 (
@@ -123,60 +91,40 @@ class Migration(migrations.Migration):
                     models.CharField(
                         max_length=128,
                         unique=True,
-                        validators=[
-                            django.core.validators.RegexValidator(
-                                regex='^[a-zA-Z0-9\\- ]+$'
-                            )
-                        ],
+                        validators=[django.core.validators.RegexValidator(regex='^[a-zA-Z0-9\\- ]+$')],
                     ),
                 ),
-                (
-                    'spawner',
-                    models.CharField(
-                        choices=[('PROCESS', 'Process')],
-                        default='PROCESS',
-                        max_length=10,
-                    ),
-                ),
+                ('spawner', models.CharField(choices=[('PROCESS', 'Process')], default='PROCESS', max_length=10,),),
                 (
                     'spawner_options',
                     models.CharField(
-                        help_text='Options that the spawner understands to start the application',
-                        max_length=10240,
+                        help_text='Options that the spawner understands to start the application', max_length=10240,
                     ),
                 ),
             ],
             options={'db_table': 'app_applicationtemplate'},
         ),
         migrations.AddIndex(
-            model_name='applicationtemplate',
-            index=models.Index(fields=['name'], name='app_applica_name_76f0ef_idx'),
+            model_name='applicationtemplate', index=models.Index(fields=['name'], name='app_applica_name_76f0ef_idx'),
         ),
         migrations.AddField(
             model_name='applicationinstance',
             name='application_template',
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT,
-                to='applications.ApplicationTemplate',
+                on_delete=django.db.models.deletion.PROTECT, to='applications.ApplicationTemplate',
             ),
         ),
         migrations.AddField(
             model_name='applicationinstance',
             name='owner',
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddIndex(
             model_name='applicationinstance',
-            index=models.Index(
-                fields=['owner', 'created_date'], name='app_applica_owner_i_d86479_idx'
-            ),
+            index=models.Index(fields=['owner', 'created_date'], name='app_applica_owner_i_d86479_idx'),
         ),
         migrations.AddIndex(
             model_name='applicationinstance',
-            index=models.Index(
-                fields=['public_host', 'state'], name='app_applica_public__48682b_idx'
-            ),
+            index=models.Index(fields=['public_host', 'state'], name='app_applica_public__48682b_idx'),
         ),
     ]

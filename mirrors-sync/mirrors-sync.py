@@ -19,9 +19,7 @@ from lowhaio import HttpDataError, HttpConnectionError, Pool, buffered, streamed
 from lowhaio_redirect import redirectable
 from bs4 import BeautifulSoup
 
-AwsCredentials = namedtuple(
-    'AwsCredentials', ['access_key_id', 'secret_access_key', 'pre_auth_headers']
-)
+AwsCredentials = namedtuple('AwsCredentials', ['access_key_id', 'secret_access_key', 'pre_auth_headers'])
 
 S3Bucket = namedtuple('AwsS3Bucket', ['region', 'host', 'name'])
 
@@ -77,16 +75,7 @@ async def blackhole(body):
 
 
 def _aws_sig_v4_headers(
-    access_key_id,
-    secret_access_key,
-    pre_auth_headers,
-    service,
-    region,
-    host,
-    method,
-    path,
-    query,
-    payload_hash,
+    access_key_id, secret_access_key, pre_auth_headers, service, region, host, method, path, query, payload_hash,
 ):
     algorithm = 'AWS4-HMAC-SHA256'
 
@@ -111,12 +100,9 @@ def _aws_sig_v4_headers(
         def canonical_request():
             canonical_uri = urllib.parse.quote(path, safe='/~')
             quoted_query = sorted(
-                (urllib.parse.quote(key, safe='~'), urllib.parse.quote(value, safe='~'))
-                for key, value in query
+                (urllib.parse.quote(key, safe='~'), urllib.parse.quote(value, safe='~')) for key, value in query
             )
-            canonical_querystring = '&'.join(
-                f'{key}={value}' for key, value in quoted_query
-            )
+            canonical_querystring = '&'.join(f'{key}={value}' for key, value in quoted_query)
             canonical_headers = ''.join(f'{key}:{value}\n' for key, value in headers)
 
             return (
@@ -151,44 +137,22 @@ def _aws_sig_v4_headers(
     ) + pre_auth_headers
 
 
-async def s3_request_full(
-    logger, context, method, path, query, api_pre_auth_headers, payload, payload_hash
-):
+async def s3_request_full(logger, context, method, path, query, api_pre_auth_headers, payload, payload_hash):
 
     with logged(
-        logger,
-        'Request: %s %s %s %s %s',
-        [method, context.bucket.host, path, query, api_pre_auth_headers],
+        logger, 'Request: %s %s %s %s %s', [method, context.bucket.host, path, query, api_pre_auth_headers],
     ):
         code, _, body = await _s3_request(
-            logger,
-            context,
-            method,
-            path,
-            query,
-            api_pre_auth_headers,
-            payload,
-            payload_hash,
+            logger, context, method, path, query, api_pre_auth_headers, payload, payload_hash,
         )
         return code, await buffered(body)
 
 
 async def s3_list_keys_relative_to_prefix(logger, context, prefix):
     async def _list(extra_query_items=()):
-        query = (
-            ('max-keys', '1000'),
-            ('list-type', '2'),
-            ('prefix', prefix),
-        ) + extra_query_items
+        query = (('max-keys', '1000'), ('list-type', '2'), ('prefix', prefix),) + extra_query_items
         code, body_bytes = await s3_request_full(
-            logger,
-            context,
-            b'GET',
-            '/',
-            query,
-            (),
-            empty_async_iterator,
-            'UNSIGNED-PAYLOAD',
+            logger, context, b'GET', '/', query, (), empty_async_iterator, 'UNSIGNED-PAYLOAD',
         )
         if code != b'200':
             raise Exception(code, body_bytes)
@@ -229,9 +193,7 @@ async def s3_list_keys_relative_to_prefix(logger, context, prefix):
             yield key
 
 
-async def _s3_request(
-    logger, context, method, path, query, api_pre_auth_headers, payload, payload_hash
-):
+async def _s3_request(logger, context, method, path, query, api_pre_auth_headers, payload, payload_hash):
     bucket = context.bucket
     return await aws_request(
         logger,
@@ -324,26 +286,16 @@ async def async_main(logger):
     s3_context = S3Context(request=request, credentials=credentials, bucket=bucket)
 
     if os.environ['MIRROR_ANACONDA_R'] == 'True':
-        await conda_mirror(
-            logger, request, s3_context, 'https://conda.anaconda.org/r/', 'r/'
-        )
+        await conda_mirror(logger, request, s3_context, 'https://conda.anaconda.org/r/', 'r/')
 
     if os.environ['MIRROR_ANACONDA_CONDA_FORGE'] == 'True':
         await conda_mirror(
-            logger,
-            request,
-            s3_context,
-            'https://conda.anaconda.org/conda-forge/',
-            'conda-forge/',
+            logger, request, s3_context, 'https://conda.anaconda.org/conda-forge/', 'conda-forge/',
         )
 
     if os.environ['MIRROR_ANACONDA_CONDA_ANACONDA'] == 'True':
         await conda_mirror(
-            logger,
-            request,
-            s3_context,
-            'https://conda.anaconda.org/anaconda/',
-            'anaconda/',
+            logger, request, s3_context, 'https://conda.anaconda.org/anaconda/', 'anaconda/',
         )
 
     if os.environ['MIRROR_CRAN'] == 'True':
@@ -354,11 +306,7 @@ async def async_main(logger):
 
     if os.environ['MIRROR_DEBIAN'] == 'True':
         await debian_mirror(
-            logger,
-            request,
-            s3_context,
-            'https://cloudfront.debian.net/debian/',
-            'debian/',
+            logger, request, s3_context, 'https://cloudfront.debian.net/debian/', 'debian/',
         )
 
     if os.environ['MIRROR_NLTK'] == 'True':
@@ -373,24 +321,16 @@ async def pypi_mirror(logger, request, s3_context):
         return re.sub(r'[-_.]+', '-', name).lower()
 
     async def list_packages():
-        request_body = (
-            b'<?xml version="1.0"?>'
-            b'<methodCall><methodName>list_packages</methodName></methodCall>'
-        )
+        request_body = b'<?xml version="1.0"?>' b'<methodCall><methodName>list_packages</methodName></methodCall>'
         _, _, body = await request(
             b'POST',
             source_base + '/pypi',
             body=streamed(request_body),
-            headers=(
-                (b'content-type', b'text/xml'),
-                (b'content-length', str(len(request_body)).encode()),
-            ),
+            headers=((b'content-type', b'text/xml'), (b'content-length', str(len(request_body)).encode()),),
         )
         return [
             package.text
-            for package in ET.fromstring(await buffered(body)).findall(
-                './params/param/value/array/data/value/string'
-            )
+            for package in ET.fromstring(await buffered(body)).findall('./params/param/value/array/data/value/string')
         ]
 
     async def changelog(sync_changes_after):
@@ -406,10 +346,7 @@ async def pypi_mirror(logger, request, s3_context):
             b'POST',
             source_base + '/pypi',
             body=streamed(request_body),
-            headers=(
-                (b'content-type', b'text/xml'),
-                (b'content-length', str(len(request_body)).encode()),
-            ),
+            headers=((b'content-type', b'text/xml'), (b'content-length', str(len(request_body)).encode()),),
         )
         return [
             package.text
@@ -447,9 +384,7 @@ async def pypi_mirror(logger, request, s3_context):
     # changelog doesn't seem to have changes older than two years, so for all projects on initial
     # import, we need to call list_packages
     project_names_with_duplicates = (
-        (await list_packages())
-        if sync_changes_after == 0
-        else (await changelog(sync_changes_after))
+        (await list_packages()) if sync_changes_after == 0 else (await changelog(sync_changes_after))
     )
 
     project_names = sorted(list(set(project_names_with_duplicates)))
@@ -458,12 +393,7 @@ async def pypi_mirror(logger, request, s3_context):
 
     for project_name in project_names:
         normalised_project_name = normalise(project_name)
-        await queue.put(
-            (
-                normalised_project_name,
-                source_base + f'/simple/{normalised_project_name}/',
-            )
-        )
+        await queue.put((normalised_project_name, source_base + f'/simple/{normalised_project_name}/',))
 
     async def transfer_project(project_name, project_url):
         code, _, body = await request(b'GET', project_url)
@@ -477,10 +407,7 @@ async def pypi_mirror(logger, request, s3_context):
 
         logger.info('Finding existing files')
         existing_project_filenames = {
-            key
-            async for key in s3_list_keys_relative_to_prefix(
-                logger, s3_context, f'{pypi_prefix}{project_name}/'
-            )
+            key async for key in s3_list_keys_relative_to_prefix(logger, s3_context, f'{pypi_prefix}{project_name}/')
         }
 
         for link in links:
@@ -490,9 +417,7 @@ async def pypi_mirror(logger, request, s3_context):
             python_version = link.get('data-requires-python')
             has_python_version = python_version is not None
             python_version_attr = (
-                ' data-requires-python="' + html.escape(python_version) + '"'
-                if has_python_version
-                else ''
+                ' data-requires-python="' + html.escape(python_version) + '"' if has_python_version else ''
             )
 
             s3_path = f'/{pypi_prefix}{project_name}/{filename}'
@@ -510,19 +435,10 @@ async def pypi_mirror(logger, request, s3_context):
                         await blackhole(body)
                         raise Exception('Failed GET {}'.format(code))
 
-                    content_length = dict(
-                        (key.lower(), value) for key, value in headers
-                    )[b'content-length']
+                    content_length = dict((key.lower(), value) for key, value in headers)[b'content-length']
                     headers = ((b'content-length', content_length),)
                     code, _ = await s3_request_full(
-                        logger,
-                        s3_context,
-                        b'PUT',
-                        s3_path,
-                        (),
-                        headers,
-                        lambda: body,
-                        'UNSIGNED-PAYLOAD',
+                        logger, s3_context, b'PUT', s3_path, (), headers, lambda: body, 'UNSIGNED-PAYLOAD',
                     )
                 except (HttpConnectionError, HttpDataError):
                     await asyncio.sleep(10)
@@ -554,14 +470,7 @@ async def pypi_mirror(logger, request, s3_context):
         for _ in range(0, 5):
             try:
                 code, _ = await s3_request_full(
-                    logger,
-                    s3_context,
-                    b'PUT',
-                    s3_path,
-                    (),
-                    headers,
-                    streamed(html_bytes),
-                    s3_hash(html_bytes),
+                    logger, s3_context, b'PUT', s3_path, (), headers, streamed(html_bytes), s3_hash(html_bytes),
                 )
             except (HttpConnectionError, HttpDataError):
                 await asyncio.sleep(10)
@@ -631,12 +540,7 @@ async def cran_mirror(logger, request, s3_context):
         raise Exception()
 
     logger.info('Finding existing files')
-    existing_files = {
-        key
-        async for key in s3_list_keys_relative_to_prefix(
-            logger, s3_context, cran_prefix
-        )
-    }
+    existing_files = {key async for key in s3_list_keys_relative_to_prefix(logger, s3_context, cran_prefix)}
 
     async def crawl(url):
         key_suffix = urllib.parse.urlparse(url).path[1:]  # Without leading /
@@ -668,8 +572,7 @@ async def cran_mirror(logger, request, s3_context):
                 absolute = urllib.parse.urljoin(url, link.get('href'))
                 absolute_no_frag = absolute.split('#')[0]
                 is_done = (
-                    urllib.parse.urlparse(absolute_no_frag).netloc
-                    == source_base_parsed.netloc
+                    urllib.parse.urlparse(absolute_no_frag).netloc == source_base_parsed.netloc
                     and absolute_no_frag not in done
                 )
                 if is_done:
@@ -683,14 +586,7 @@ async def cran_mirror(logger, request, s3_context):
 
         headers = ((b'content-length', content_length),)
         code, _ = await s3_request_full(
-            logger,
-            s3_context,
-            b'PUT',
-            '/' + target_key,
-            (),
-            headers,
-            lambda: body,
-            'UNSIGNED-PAYLOAD',
+            logger, s3_context, b'PUT', '/' + target_key, (), headers, lambda: body, 'UNSIGNED-PAYLOAD',
         )
         if code != b'200':
             raise Exception()
@@ -741,15 +637,10 @@ async def conda_mirror(logger, request, s3_context, source_base_url, s3_prefix):
     queue = asyncio.Queue()
 
     logger.info('Finding existing files')
-    existing_files = {
-        key
-        async for key in s3_list_keys_relative_to_prefix(logger, s3_context, s3_prefix)
-    }
+    existing_files = {key async for key in s3_list_keys_relative_to_prefix(logger, s3_context, s3_prefix)}
 
     for arch_dir in arch_dirs:
-        code, _, body = await request(
-            b'GET', source_base_url + arch_dir + 'repodata.json'
-        )
+        code, _, body = await request(b'GET', source_base_url + arch_dir + 'repodata.json')
         if code != b'200':
             raise Exception()
 
@@ -761,9 +652,7 @@ async def conda_mirror(logger, request, s3_context, source_base_url, s3_prefix):
 
         repodatas.append((arch_dir + 'repodata.json', source_repodata_raw))
 
-        code, _, body = await request(
-            b'GET', source_base_url + arch_dir + 'repodata.json.bz2'
-        )
+        code, _, body = await request(b'GET', source_base_url + arch_dir + 'repodata.json.bz2')
         if code != b'200':
             raise Exception()
         repodatas.append((arch_dir + 'repodata.json.bz2', await buffered(body)))
@@ -780,25 +669,14 @@ async def conda_mirror(logger, request, s3_context, source_base_url, s3_prefix):
         code, headers, body = await request(b'GET', source_package_url)
         if code != b'200':
             response = await buffered(body)
-            raise Exception(
-                'Exception GET {} {} {}'.format(source_package_url, code, response)
-            )
+            raise Exception('Exception GET {} {} {}'.format(source_package_url, code, response))
         headers_lower = dict((key.lower(), value) for key, value in headers)
         headers = ((b'content-length', headers_lower[b'content-length']),)
         code, body = await s3_request_full(
-            logger,
-            s3_context,
-            b'PUT',
-            '/' + target_package_key,
-            (),
-            headers,
-            lambda: body,
-            'UNSIGNED-PAYLOAD',
+            logger, s3_context, b'PUT', '/' + target_package_key, (), headers, lambda: body, 'UNSIGNED-PAYLOAD',
         )
         if code != b'200':
-            raise Exception(
-                'Exception PUT {} {} {}'.format('/' + target_package_key, code, body)
-            )
+            raise Exception('Exception PUT {} {} {}'.format('/' + target_package_key, code, body))
 
     async def transfer_task():
         while True:
@@ -829,14 +707,7 @@ async def conda_mirror(logger, request, s3_context, source_base_url, s3_prefix):
         target_repodata_key = s3_prefix + path
         headers = ((b'content-length', str(len(data)).encode('ascii')),)
         code, _ = await s3_request_full(
-            logger,
-            s3_context,
-            b'PUT',
-            '/' + target_repodata_key,
-            (),
-            headers,
-            streamed(data),
-            s3_hash(data),
+            logger, s3_context, b'PUT', '/' + target_repodata_key, (), headers, streamed(data), s3_hash(data),
         )
         if code != b'200':
             raise Exception()
@@ -851,10 +722,7 @@ async def debian_mirror(logger, request, s3_context, source_base_url, s3_prefix)
     await queue.put(source_base_url)
 
     logger.info('Finding existing files')
-    existing_relative_keys = {
-        key
-        async for key in s3_list_keys_relative_to_prefix(logger, s3_context, s3_prefix)
-    }
+    existing_relative_keys = {key async for key in s3_list_keys_relative_to_prefix(logger, s3_context, s3_prefix)}
 
     async def crawl(url):
         relative_key = urllib.parse.urlparse(url).path[len(source_base_path) :]
@@ -901,14 +769,7 @@ async def debian_mirror(logger, request, s3_context, source_base_url, s3_prefix)
         content_length = headers_lower[b'content-length']
         headers = ((b'content-length', content_length),)
         code, _ = await s3_request_full(
-            logger,
-            s3_context,
-            b'PUT',
-            '/' + target_key,
-            (),
-            headers,
-            lambda: body,
-            'UNSIGNED-PAYLOAD',
+            logger, s3_context, b'PUT', '/' + target_key, (), headers, lambda: body, 'UNSIGNED-PAYLOAD',
         )
         if code != b'200':
             raise Exception()
@@ -962,21 +823,12 @@ async def nltk_mirror(logger, request, s3_context, s3_prefix):
         _, ext = os.path.splitext(package_original_url)
         new_path = f'/{s3_prefix}{package_id}-{package_checksum}{ext}'
 
-        package.attrib[
-            'url'
-        ] = f'https://{s3_context.bucket.host}/{s3_context.bucket.name}{new_path}'
+        package.attrib['url'] = f'https://{s3_context.bucket.host}/{s3_context.bucket.name}{new_path}'
 
         # If the file already exists, don't re-upload. Named including the
         # checksum deliberately so we can do this
         code, _ = await s3_request_full(
-            logger,
-            s3_context,
-            b'HEAD',
-            new_path,
-            (),
-            headers,
-            empty_async_iterator,
-            'UNSIGNED-PAYLOAD',
+            logger, s3_context, b'HEAD', new_path, (), headers, empty_async_iterator, 'UNSIGNED-PAYLOAD',
         )
         logger.info('%s %s', f'{s3_context.bucket.name}{new_path}', code)
         if code == b'200':
@@ -994,14 +846,7 @@ async def nltk_mirror(logger, request, s3_context, s3_prefix):
             (b'content-type', headers_lower[b'content-type']),
         )
         code, _ = await s3_request_full(
-            logger,
-            s3_context,
-            b'PUT',
-            new_path,
-            (),
-            headers,
-            lambda: body,
-            'UNSIGNED-PAYLOAD',
+            logger, s3_context, b'PUT', new_path, (), headers, lambda: body, 'UNSIGNED-PAYLOAD',
         )
         if code != b'200':
             raise Exception()
@@ -1015,14 +860,7 @@ async def nltk_mirror(logger, request, s3_context, s3_prefix):
         (b'content-type', index_xml_content_type),
     )
     code, _ = await s3_request_full(
-        logger,
-        s3_context,
-        b'PUT',
-        f'/{s3_prefix}index.xml',
-        (),
-        headers,
-        streamed(output_xml_str),
-        'UNSIGNED-PAYLOAD',
+        logger, s3_context, b'PUT', f'/{s3_prefix}index.xml', (), headers, streamed(output_xml_str), 'UNSIGNED-PAYLOAD',
     )
     if code != b'200':
         raise Exception()

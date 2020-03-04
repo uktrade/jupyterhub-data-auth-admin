@@ -64,12 +64,7 @@ from dataworkspace.zendesk import create_zendesk_ticket
 
 
 def filter_datasets(
-    datasets: Union[ReferenceDataset, DataSet],
-    query,
-    source,
-    use=None,
-    user=None,
-    form=None,
+    datasets: Union[ReferenceDataset, DataSet], query, source, use=None, user=None, form=None,
 ):
     search = SearchVector('name', 'short_description', config='english')
     search_query = SearchQuery(query, config='english')
@@ -79,9 +74,7 @@ def filter_datasets(
     if user:
         if datasets.model is ReferenceDataset:
             reference_type = DataSetType.REFERENCE.value
-            reference_perm = dataset_type_to_manage_unpublished_permission_codename(
-                reference_type
-            )
+            reference_perm = dataset_type_to_manage_unpublished_permission_codename(reference_type)
 
             if user.has_perm(reference_perm):
                 dataset_filter |= Q(published=False)
@@ -91,12 +84,8 @@ def filter_datasets(
                 DataSetType.MASTER.value,
                 DataSetType.DATACUT.value,
             )
-            master_perm = dataset_type_to_manage_unpublished_permission_codename(
-                master_type
-            )
-            datacut_perm = dataset_type_to_manage_unpublished_permission_codename(
-                datacut_type
-            )
+            master_perm = dataset_type_to_manage_unpublished_permission_codename(master_type)
+            datacut_perm = dataset_type_to_manage_unpublished_permission_codename(datacut_type)
 
             if user.has_perm(master_perm) and (not use or str(master_type) in use):
                 dataset_filter |= Q(published=False, type=master_type)
@@ -104,9 +93,7 @@ def filter_datasets(
             if user.has_perm(datacut_perm) and (not use or str(datacut_type) in use):
                 dataset_filter |= Q(published=False, type=datacut_type)
 
-    datasets = datasets.filter(dataset_filter).annotate(
-        search=search, search_rank=SearchRank(search, search_query)
-    )
+    datasets = datasets.filter(dataset_filter).annotate(search=search, search_rank=SearchRank(search, search_query))
 
     if query:
         datasets = datasets.filter(search=query)
@@ -131,36 +118,23 @@ def find_datasets(request):
     else:
         return HttpResponseRedirect(reverse("datasets:find_datasets"))
 
-    datasets = filter_datasets(
-        DataSet.objects.live(), query, source, use, user=request.user, form=form
-    )
+    datasets = filter_datasets(DataSet.objects.live(), query, source, use, user=request.user, form=form)
 
     # Include reference datasets if required
     if not use or str(DataSetType.REFERENCE.value) in use:
         reference_datasets = filter_datasets(
             ReferenceDataset.objects.live(), query, source, user=request.user, form=form
         )
-        datasets = datasets.values(
-            'id', 'name', 'slug', 'short_description', 'search_rank'
-        ).union(
-            reference_datasets.values(
-                'uuid', 'name', 'slug', 'short_description', 'search_rank'
-            )
+        datasets = datasets.values('id', 'name', 'slug', 'short_description', 'search_rank').union(
+            reference_datasets.values('uuid', 'name', 'slug', 'short_description', 'search_rank')
         )
 
-    paginator = Paginator(
-        datasets.order_by('-search_rank', 'name'),
-        settings.SEARCH_RESULTS_DATASETS_PER_PAGE,
-    )
+    paginator = Paginator(datasets.order_by('-search_rank', 'name'), settings.SEARCH_RESULTS_DATASETS_PER_PAGE,)
 
     return render(
         request,
         'datasets/index.html',
-        {
-            "form": form,
-            "query": query,
-            "datasets": paginator.get_page(request.GET.get("page")),
-        },
+        {"form": form, "query": query, "datasets": paginator.get_page(request.GET.get("page")),},
     )
 
 
@@ -180,9 +154,7 @@ class DatasetDetailView(DetailView):
                 pass
 
         if dataset:
-            perm_codename = dataset_type_to_manage_unpublished_permission_codename(
-                dataset.type
-            )
+            perm_codename = dataset_type_to_manage_unpublished_permission_codename(dataset.type)
 
             if not dataset.published and not self.request.user.has_perm(perm_codename):
                 dataset = None
@@ -203,11 +175,7 @@ class DatasetDetailView(DetailView):
             records = records[:preview_limit]
 
             ctx.update(
-                {
-                    'preview_limit': preview_limit,
-                    'record_count': total_record_count,
-                    'records': records,
-                }
+                {'preview_limit': preview_limit, 'record_count': total_record_count, 'records': records,}
             )
             return ctx
         source_tables = sorted(self.object.sourcetable_set.all(), key=lambda x: x.name)
@@ -220,41 +188,26 @@ class DatasetDetailView(DetailView):
                 columns += [
                     "{}.{}".format(table.table, column)
                     for column in datasets_db.get_columns(
-                        table.database.memorable_name,
-                        schema=table.schema,
-                        table=table.table,
+                        table.database.memorable_name, schema=table.schema, table=table.table,
                     )
                 ]
         elif source_views:
             columns = datasets_db.get_columns(
-                source_views[0].database.memorable_name,
-                schema=source_views[0].schema,
-                table=source_views[0].view,
+                source_views[0].database.memorable_name, schema=source_views[0].schema, table=source_views[0].view,
             )
         elif custom_queries:
-            columns = datasets_db.get_columns(
-                custom_queries[0].database.memorable_name, query=custom_queries[0].query
-            )
+            columns = datasets_db.get_columns(custom_queries[0].database.memorable_name, query=custom_queries[0].query)
         else:
             columns = None
 
         data_links = sorted(
-            chain(
-                self.object.sourcelink_set.all(),
-                source_tables,
-                source_views,
-                custom_queries,
-            ),
-            key=lambda x: x.name,
+            chain(self.object.sourcelink_set.all(), source_tables, source_views, custom_queries,), key=lambda x: x.name,
         )
 
-        DataLinkWithLinkToggle = namedtuple(
-            'DataLinkWithLinkToggle', ('data_link', 'can_show_link')
-        )
+        DataLinkWithLinkToggle = namedtuple('DataLinkWithLinkToggle', ('data_link', 'can_show_link'))
         data_links_with_link_toggle = [
             DataLinkWithLinkToggle(
-                data_link=data_link,
-                can_show_link=data_link.can_show_link_for_user(self.request.user),
+                data_link=data_link, can_show_link=data_link.can_show_link_for_user(self.request.user),
             )
             for data_link in data_links
         ]
@@ -288,15 +241,9 @@ def eligibility_criteria_view(request, dataset_uuid):
         form = EligibilityCriteriaForm(request.POST)
         if form.is_valid():
             if form.cleaned_data['meet_criteria']:
-                return HttpResponseRedirect(
-                    reverse('datasets:request_access', args=[dataset_uuid])
-                )
+                return HttpResponseRedirect(reverse('datasets:request_access', args=[dataset_uuid]))
             else:
-                return HttpResponseRedirect(
-                    reverse(
-                        'datasets:eligibility_criteria_not_met', args=[dataset_uuid]
-                    )
-                )
+                return HttpResponseRedirect(reverse('datasets:eligibility_criteria_not_met', args=[dataset_uuid]))
 
     return render(request, 'eligibility_criteria.html', {'dataset': dataset})
 
@@ -318,9 +265,7 @@ def request_access_view(request, dataset_uuid):
             goal = form.cleaned_data['goal']
             contact_email = form.cleaned_data['email']
 
-            user_edit_relative = reverse(
-                'admin:auth_user_change', args=[request.user.id]
-            )
+            user_edit_relative = reverse('admin:auth_user_change', args=[request.user.id])
             user_url = request.build_absolute_uri(user_edit_relative)
 
             dataset_url = request.build_absolute_uri(dataset.get_absolute_url())
@@ -339,11 +284,7 @@ def request_access_view(request, dataset_uuid):
             url = reverse('datasets:request_access_success', args=[dataset_uuid])
             return HttpResponseRedirect(f'{url}?ticket={ticket_reference}')
 
-    return render(
-        request,
-        'request_access.html',
-        {'dataset': dataset, 'authenticated_user': request.user},
-    )
+    return render(request, 'request_access.html', {'dataset': dataset, 'authenticated_user': request.user},)
 
 
 @require_GET
@@ -353,9 +294,7 @@ def request_access_success_view(request, dataset_uuid):
 
     dataset = find_dataset(dataset_uuid, request.user)
 
-    return render(
-        request, 'request_access_success.html', {'ticket': ticket, 'dataset': dataset}
-    )
+    return render(request, 'request_access_success.html', {'ticket': ticket, 'dataset': dataset})
 
 
 class ReferenceDatasetDownloadView(DetailView):
@@ -416,9 +355,7 @@ class ReferenceDatasetDownloadView(DetailView):
             response['Content-Type'] = 'text/csv'
             with closing(io.StringIO()) as outfile:
                 writer = csv.DictWriter(
-                    outfile,
-                    fieldnames=ref_dataset.export_field_names,
-                    quoting=csv.QUOTE_NONNUMERIC,
+                    outfile, fieldnames=ref_dataset.export_field_names, quoting=csv.QUOTE_NONNUMERIC,
                 )
                 writer.writeheader()
                 writer.writerows(records)
@@ -435,9 +372,7 @@ class SourceLinkDownloadView(DetailView):
         if not dataset.user_has_access(self.request.user):
             return HttpResponseForbidden()
 
-        source_link = get_object_or_404(
-            SourceLink, id=self.kwargs.get('source_link_id'), dataset=dataset
-        )
+        source_link = get_object_or_404(SourceLink, id=self.kwargs.get('source_link_id'), dataset=dataset)
 
         log_event(
             request.user,
@@ -453,23 +388,15 @@ class SourceLinkDownloadView(DetailView):
 
         client = boto3.client('s3')
         try:
-            file_object = client.get_object(
-                Bucket=settings.AWS_UPLOADS_BUCKET, Key=source_link.url
-            )
+            file_object = client.get_object(Bucket=settings.AWS_UPLOADS_BUCKET, Key=source_link.url)
         except ClientError as ex:
             try:
-                return HttpResponse(
-                    status=ex.response['ResponseMetadata']['HTTPStatusCode']
-                )
+                return HttpResponse(status=ex.response['ResponseMetadata']['HTTPStatusCode'])
             except KeyError:
                 return HttpResponseServerError()
 
-        response = StreamingHttpResponse(
-            file_object['Body'].iter_chunks(), content_type=file_object['ContentType']
-        )
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(
-            os.path.split(source_link.url)[-1]
-        )
+        response = StreamingHttpResponse(file_object['Body'].iter_chunks(), content_type=file_object['ContentType'])
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(os.path.split(source_link.url)[-1])
 
         return response
 
@@ -487,9 +414,7 @@ class SourceDownloadMixin:
 
     def get(self, request, *_, **__):
         dataset = find_dataset(self.kwargs.get('dataset_uuid'), request.user)
-        db_object = get_object_or_404(
-            self.model, id=self.kwargs.get('source_id'), dataset=dataset
-        )
+        db_object = get_object_or_404(self.model, id=self.kwargs.get('source_id'), dataset=dataset)
 
         if not db_object.dataset.user_has_access(self.request.user):
             return HttpResponseForbidden()
@@ -514,17 +439,10 @@ class SourceViewDownloadView(SourceDownloadMixin, DetailView):
 
     @staticmethod
     def db_object_exists(db_object):
-        return view_exists(
-            db_object.database.memorable_name, db_object.schema, db_object.view
-        )
+        return view_exists(db_object.database.memorable_name, db_object.schema, db_object.view)
 
     def get_table_data(self, db_object):
-        return table_data(
-            self.request.user.email,
-            db_object.database.memorable_name,
-            db_object.schema,
-            db_object.view,
-        )
+        return table_data(self.request.user.email, db_object.database.memorable_name, db_object.schema, db_object.view,)
 
 
 class CustomDatasetQueryDownloadView(DetailView):
@@ -536,9 +454,7 @@ class CustomDatasetQueryDownloadView(DetailView):
         if not dataset.user_has_access(self.request.user):
             return HttpResponseForbidden()
 
-        query = get_object_or_404(
-            self.model, id=self.kwargs.get('query_id'), dataset=dataset
-        )
+        query = get_object_or_404(self.model, id=self.kwargs.get('query_id'), dataset=dataset)
 
         if not query.reviewed and not request.user.is_superuser:
             return HttpResponseForbidden()
@@ -553,8 +469,5 @@ class CustomDatasetQueryDownloadView(DetailView):
         dataset.save(update_fields=['number_of_downloads'])
 
         return streaming_query_response(
-            request.user.email,
-            query.database.memorable_name,
-            sql.SQL(query.query),
-            query.get_filename(),
+            request.user.email, query.database.memorable_name, sql.SQL(query.query), query.get_filename(),
         )

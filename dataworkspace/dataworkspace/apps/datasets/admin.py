@@ -54,9 +54,7 @@ class ManageUnpublishedDatasetsMixin(BaseModelAdmin):
 
     def __init__(self, *args, **kwargs):
         if self.manage_unpublished_permission_codename is None:
-            raise NotImplementedError(
-                "Must define class attribute `manage_unpublished_permission_codename`"
-            )
+            raise NotImplementedError("Must define class attribute `manage_unpublished_permission_codename`")
         super().__init__(*args, **kwargs)
 
     def has_add_permission(self, request):
@@ -88,43 +86,33 @@ class SourceLinkInline(admin.TabularInline, ManageUnpublishedDatasetsMixin):
     form = SourceLinkForm
     model = SourceLink
     extra = 1
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_datacut_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_datacut_datasets'
 
 
 class SourceTableInline(admin.TabularInline, ManageUnpublishedDatasetsMixin):
     model = SourceTable
     extra = 1
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_master_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_master_datasets'
 
 
 class SourceViewInline(admin.TabularInline, ManageUnpublishedDatasetsMixin):
     model = SourceView
     extra = 1
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_datacut_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_datacut_datasets'
 
 
 class CustomDatasetQueryInline(admin.TabularInline, ManageUnpublishedDatasetsMixin):
     model = CustomDatasetQuery
     form = CustomDatasetQueryInlineForm
     extra = 0
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_datacut_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_datacut_datasets'
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj)
 
         # SQL queries should be reviewed by a superuser
         extra_readonly = set()
-        if not request.user.is_superuser and request.user.has_perm(
-            self.manage_unpublished_permission_codename
-        ):
+        if not request.user.is_superuser and request.user.has_perm(self.manage_unpublished_permission_codename):
             extra_readonly.add('reviewed')
 
         readonly_fields = readonly_fields + tuple(extra_readonly)
@@ -137,17 +125,13 @@ def clone_dataset(modeladmin, request, queryset):
         dataset.clone()
 
 
-class PermissionedDatasetAdmin(
-    DeletableTimeStampedUserAdmin, ManageUnpublishedDatasetsMixin
-):
+class PermissionedDatasetAdmin(DeletableTimeStampedUserAdmin, ManageUnpublishedDatasetsMixin):
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj)
 
         # Don't allow users who can only manage unpublished datasets, to publish a dataset
         extra_readonly = []
-        if not request.user.is_superuser and request.user.has_perm(
-            self.manage_unpublished_permission_codename
-        ):
+        if not request.user.is_superuser and request.user.has_perm(self.manage_unpublished_permission_codename):
             extra_readonly.append('published')
 
         readonly_fields = readonly_fields + tuple(extra_readonly)
@@ -191,26 +175,12 @@ class BaseDatasetAdmin(PermissionedDatasetAdmin):
                 ]
             },
         ),
-        (
-            'Permissions',
-            {
-                'fields': [
-                    'requires_authorization',
-                    'eligibility_criteria',
-                    'authorized_users',
-                ]
-            },
-        ),
+        ('Permissions', {'fields': ['requires_authorization', 'eligibility_criteria', 'authorized_users',]},),
     ]
 
     class Media:
         js = ('js/min/django_better_admin_arrayfield.min.js',)
-        css = {
-            'all': (
-                'css/min/django_better_admin_arrayfield.min.css',
-                'data-workspace-admin.css',
-            )
-        }
+        css = {'all': ('css/min/django_better_admin_arrayfield.min.css', 'data-workspace-admin.css',)}
 
     def get_source_tags(self, obj):
         return ', '.join([x.name for x in obj.source_tags.all()])
@@ -221,18 +191,12 @@ class BaseDatasetAdmin(PermissionedDatasetAdmin):
     def save_model(self, request, obj, form, change):
         original_user_access_type = obj.user_access_type
         obj.user_access_type = (
-            'REQUIRES_AUTHORIZATION'
-            if form.cleaned_data['requires_authorization']
-            else 'REQUIRES_AUTHENTICATION'
+            'REQUIRES_AUTHORIZATION' if form.cleaned_data['requires_authorization'] else 'REQUIRES_AUTHENTICATION'
         )
 
-        current_authorized_users = set(
-            get_user_model().objects.filter(datasetuserpermission__dataset=obj)
-        )
+        current_authorized_users = set(get_user_model().objects.filter(datasetuserpermission__dataset=obj))
 
-        authorized_users = set(
-            form.cleaned_data.get('authorized_users', get_user_model().objects.none())
-        )
+        authorized_users = set(form.cleaned_data.get('authorized_users', get_user_model().objects.none()))
 
         user_content_type_id = ContentType.objects.get_for_model(get_user_model()).pk
 
@@ -267,9 +231,7 @@ class BaseDatasetAdmin(PermissionedDatasetAdmin):
                 object_id=obj.id,
                 object_repr=force_text(obj),
                 action_flag=CHANGE,
-                change_message='user_access_type set to {}'.format(
-                    obj.user_access_type
-                ),
+                change_message='user_access_type set to {}'.format(obj.user_access_type),
             )
 
 
@@ -277,18 +239,14 @@ class BaseDatasetAdmin(PermissionedDatasetAdmin):
 class MasterDatasetAdmin(BaseDatasetAdmin):
     form = MasterDatasetForm
     inlines = [SourceTableInline]
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_master_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_master_datasets'
 
 
 @admin.register(DataCutDataset)
 class DataCutDatasetAdmin(BaseDatasetAdmin):
     form = DataCutDatasetForm
     inlines = [SourceLinkInline, SourceViewInline, CustomDatasetQueryInline]
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_datacut_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_datacut_datasets'
 
 
 @admin.register(SourceTag)
@@ -297,9 +255,7 @@ class SourceTagAdmin(admin.ModelAdmin):
     search_fields = ['name']
 
 
-class ReferenceDataFieldInline(
-    SortableInlineAdminMixin, admin.TabularInline, ManageUnpublishedDatasetsMixin
-):
+class ReferenceDataFieldInline(SortableInlineAdminMixin, admin.TabularInline, ManageUnpublishedDatasetsMixin):
     form = ReferenceDataFieldInlineForm
     formset = ReferenceDataInlineFormset
     model = ReferenceDatasetField
@@ -324,9 +280,7 @@ class ReferenceDataFieldInline(
             },
         )
     ]
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_reference_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_reference_datasets'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         # Do not allow a link between a reference dataset field and it's parent reference dataset
@@ -381,9 +335,7 @@ class ReferenceDatasetAdmin(PermissionedDatasetAdmin):
         )
     ]
     readonly_fields = ('get_published_version',)
-    manage_unpublished_permission_codename = (
-        'datasets.manage_unpublished_reference_datasets'
-    )
+    manage_unpublished_permission_codename = 'datasets.manage_unpublished_reference_datasets'
 
     def get_published_version(self, obj):
         if obj.published_version == '0.0':

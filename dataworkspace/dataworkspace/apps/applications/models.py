@@ -37,22 +37,16 @@ class ApplicationTemplate(TimeStampedModel):
         unique=True,
     )
     spawner = models.CharField(
-        max_length=10,
-        choices=(('PROCESS', 'Process'), ('FARGATE', 'Fargate')),
-        default='FARGATE',
+        max_length=10, choices=(('PROCESS', 'Process'), ('FARGATE', 'Fargate')), default='FARGATE',
     )
     spawner_time = models.IntegerField(null=False)
     spawner_options = models.CharField(
-        max_length=10240,
-        help_text='Options that the spawner understands to start the application',
+        max_length=10240, help_text='Options that the spawner understands to start the application',
     )
     application_type = models.CharField(
         max_length=64,
         choices=(
-            (
-                'VISUALISATION',
-                'Visualisation: One instance launched and accessed by all authorized users',
-            ),
+            ('VISUALISATION', 'Visualisation: One instance launched and accessed by all authorized users',),
             ('TOOL', 'Tool: A separate instance launched for each user'),
         ),
         default='TOOL',
@@ -84,15 +78,11 @@ class VisualisationTemplate(ApplicationTemplate):
         proxy = True
         verbose_name = 'Visualisation'
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
-    ):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.visible = False
         self.application_type = 'VISUALISATION'
 
-        super(VisualisationTemplate, self).save(
-            force_insert, force_update, using, update_fields
-        )
+        super(VisualisationTemplate, self).save(force_insert, force_update, using, update_fields)
 
 
 class ApplicationInstance(TimeStampedModel):
@@ -101,26 +91,17 @@ class ApplicationInstance(TimeStampedModel):
     owner = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
 
     # Stored explicitly to allow matching if URL scheme changed
-    public_host = models.CharField(
-        max_length=63,
-        help_text='The leftmost part of the domain name of this application',
-    )
+    public_host = models.CharField(max_length=63, help_text='The leftmost part of the domain name of this application',)
 
     # Copy of the options to allow for spawners to be changed after (or during) spawning
-    application_template = models.ForeignKey(
-        ApplicationTemplate, on_delete=models.PROTECT
-    )
-    spawner = models.CharField(
-        max_length=15, help_text='The spawner used to start the application'
-    )
+    application_template = models.ForeignKey(ApplicationTemplate, on_delete=models.PROTECT)
+    spawner = models.CharField(max_length=15, help_text='The spawner used to start the application')
     spawner_application_template_options = models.CharField(
-        max_length=10240,
-        help_text='The spawner options at the time the application instance was spawned',
+        max_length=10240, help_text='The spawner options at the time the application instance was spawned',
     )
 
     spawner_application_instance_id = models.CharField(
-        max_length=128,
-        help_text='An ID that the spawner understands to control and report on the application',
+        max_length=128, help_text='An ID that the spawner understands to control and report on the application',
     )
 
     # As reported by the spawner
@@ -131,16 +112,11 @@ class ApplicationInstance(TimeStampedModel):
 
     state = models.CharField(
         max_length=16,
-        choices=(
-            ('SPAWNING', 'Spawning'),
-            ('RUNNING', 'Running'),
-            ('STOPPED', 'Stopped'),
-        ),
+        choices=(('SPAWNING', 'Spawning'), ('RUNNING', 'Running'), ('STOPPED', 'Stopped'),),
         default='SPAWNING',
     )
     proxy_url = models.CharField(
-        max_length=256,
-        help_text='The URL that the proxy can proxy HTTP and WebSockets requests to',
+        max_length=256, help_text='The URL that the proxy can proxy HTTP and WebSockets requests to',
     )
 
     # Fargate expects numerical values for CPU and memory, but boto3 expects
@@ -156,9 +132,7 @@ class ApplicationInstance(TimeStampedModel):
     # instances for the same public host name are created, but to allow multiple stopped or
     # errored
     single_running_or_spawning_integrity = models.CharField(
-        max_length=63,
-        unique=True,
-        help_text='Used internally to avoid duplicate running applications',
+        max_length=63, unique=True, help_text='Used internally to avoid duplicate running applications',
     )
 
     class Meta:
@@ -182,9 +156,7 @@ class ApplicationInstanceDbUsers(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     db = models.ForeignKey(Database, on_delete=models.CASCADE)
     db_username = models.CharField(max_length=256)
-    application_instance = models.ForeignKey(
-        ApplicationInstance, on_delete=models.CASCADE
-    )
+    application_instance = models.ForeignKey(ApplicationInstance, on_delete=models.CASCADE)
 
     class Meta:
         indexes = [models.Index(fields=['db_username'])]
@@ -192,9 +164,7 @@ class ApplicationInstanceDbUsers(TimeStampedModel):
 
 class ApplicationTemplateUserPermission(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    application_template = models.ForeignKey(
-        ApplicationTemplate, on_delete=models.CASCADE
-    )
+    application_template = models.ForeignKey(ApplicationTemplate, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'app_applicationtemplateuserpermission'

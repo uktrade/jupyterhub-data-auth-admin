@@ -9,14 +9,10 @@ class TestEventLogAdmin(BaseAdminTestCase):
         event1 = factories.EventLogFactory.create(
             user=self.user, related_object=factories.ReferenceDatasetFactory.create()
         )
-        event2 = factories.EventLogFactory.create(
-            related_object=factories.DatabaseFactory.create()
-        )
+        event2 = factories.EventLogFactory.create(related_object=factories.DatabaseFactory.create())
         response = self._authenticated_post(
             reverse('admin:eventlog_eventlog_changelist'),
             {'action': 'export_events', '_selected_action': [event1.id, event2.id]},
         )
-        self.assertContains(
-            response, '"timestamp","user","event_type","related_object","extra"'
-        )
+        self.assertContains(response, '"timestamp","user","event_type","related_object","extra"')
         self.assertEqual(len(response.content.splitlines()), 3)

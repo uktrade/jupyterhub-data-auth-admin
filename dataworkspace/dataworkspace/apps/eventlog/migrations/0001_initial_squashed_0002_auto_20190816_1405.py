@@ -37,16 +37,13 @@ class Migration(migrations.Migration):
                 (
                     'extra',
                     django.contrib.postgres.fields.jsonb.JSONField(
-                        encoder=django.core.serializers.json.DjangoJSONEncoder,
-                        null=True,
+                        encoder=django.core.serializers.json.DjangoJSONEncoder, null=True,
                     ),
                 ),
                 (
                     'content_type',
                     models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to='contenttypes.ContentType',
+                        null=True, on_delete=django.db.models.deletion.SET_NULL, to='contenttypes.ContentType',
                     ),
                 ),
                 (

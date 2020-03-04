@@ -26,9 +26,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='referencedatasetfield',
-            unique_together={
-                ('reference_dataset', 'column_name'),
-                ('reference_dataset', 'name'),
-            },
+            unique_together={('reference_dataset', 'column_name'), ('reference_dataset', 'name'),},
         ),
     ]

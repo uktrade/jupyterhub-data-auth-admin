@@ -38,9 +38,7 @@ class AppUserCreationForm(forms.ModelForm):
 
 class AppUserEditForm(forms.ModelForm):
     can_start_all_applications = forms.BooleanField(
-        label='Can start local tools',
-        help_text='For JupyterLab, rStudio and pgAdmin',
-        required=False,
+        label='Can start local tools', help_text='For JupyterLab, rStudio and pgAdmin', required=False,
     )
     can_develop_visualisations = forms.BooleanField(
         label='Can develop visualisations',
@@ -53,16 +51,12 @@ class AppUserEditForm(forms.ModelForm):
     authorized_master_datasets = forms.ModelMultipleChoiceField(
         required=False,
         widget=FilteredSelectMultiple('master datasets', False),
-        queryset=MasterDataset.objects.live()
-        .filter(user_access_type='REQUIRES_AUTHORIZATION')
-        .order_by('name'),
+        queryset=MasterDataset.objects.live().filter(user_access_type='REQUIRES_AUTHORIZATION').order_by('name'),
     )
     authorized_data_cut_datasets = forms.ModelMultipleChoiceField(
         required=False,
         widget=FilteredSelectMultiple('data cut datasets', False),
-        queryset=DataCutDataset.objects.live()
-        .filter(user_access_type='REQUIRES_AUTHORIZATION')
-        .order_by('name'),
+        queryset=DataCutDataset.objects.live().filter(user_access_type='REQUIRES_AUTHORIZATION').order_by('name'),
     )
     authorized_visualisations = forms.ModelMultipleChoiceField(
         label='Authorized visualisations',
@@ -79,47 +73,29 @@ class AppUserEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         instance = kwargs['instance']
 
-        self.fields[
-            'can_start_all_applications'
-        ].initial = instance.user_permissions.filter(
-            codename='start_all_applications',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+        self.fields['can_start_all_applications'].initial = instance.user_permissions.filter(
+            codename='start_all_applications', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         ).exists()
 
-        self.fields[
-            'can_develop_visualisations'
-        ].initial = instance.user_permissions.filter(
-            codename='develop_visualisations',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+        self.fields['can_develop_visualisations'].initial = instance.user_permissions.filter(
+            codename='develop_visualisations', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         ).exists()
 
         self.fields['can_access_appstream'].initial = instance.user_permissions.filter(
-            codename='access_appstream',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+            codename='access_appstream', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         ).exists()
 
-        self.fields[
-            'authorized_master_datasets'
-        ].initial = MasterDataset.objects.live().filter(
+        self.fields['authorized_master_datasets'].initial = MasterDataset.objects.live().filter(
             datasetuserpermission__user=instance
         )
-        self.fields[
-            'authorized_data_cut_datasets'
-        ].initial = DataCutDataset.objects.live().filter(
+        self.fields['authorized_data_cut_datasets'].initial = DataCutDataset.objects.live().filter(
             datasetuserpermission__user=instance
         )
-        self.fields[
-            'authorized_visualisations'
-        ].queryset = ApplicationTemplate.objects.filter(
+        self.fields['authorized_visualisations'].queryset = ApplicationTemplate.objects.filter(
             application_type='VISUALISATION'
-        ).order_by(
-            'name', 'id'
-        )
-        self.fields[
-            'authorized_visualisations'
-        ].initial = ApplicationTemplate.objects.filter(
-            application_type='VISUALISATION',
-            applicationtemplateuserpermission__user=instance,
+        ).order_by('name', 'id')
+        self.fields['authorized_visualisations'].initial = ApplicationTemplate.objects.filter(
+            application_type='VISUALISATION', applicationtemplateuserpermission__user=instance,
         )
 
 
@@ -135,8 +111,7 @@ class LocalToolsFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         perm = Permission.objects.get(
-            codename='start_all_applications',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+            codename='start_all_applications', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         )
         if self.value() == 'yes':
             return queryset.filter(user_permissions=perm)
@@ -154,8 +129,7 @@ class AppStreamFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         perm = Permission.objects.get(
-            codename='access_appstream',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+            codename='access_appstream', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         )
         if self.value() == 'yes':
             return queryset.filter(user_permissions=perm)
@@ -168,9 +142,7 @@ class AppStreamFilter(admin.SimpleListFilter):
 class AppUserAdmin(UserAdmin):
     add_form_template = 'admin/change_form.html'
     add_form = AppUserCreationForm
-    add_fieldsets = (
-        (None, {'classes': ('wide',), 'fields': ('email', 'first_name', 'last_name')}),
-    )
+    add_fieldsets = ((None, {'classes': ('wide',), 'fields': ('email', 'first_name', 'last_name')}),)
     list_filter = (
         'is_staff',
         'is_superuser',
@@ -196,13 +168,7 @@ class AppUserAdmin(UserAdmin):
         ),
         (
             'Data Access',
-            {
-                'fields': [
-                    'authorized_master_datasets',
-                    'authorized_data_cut_datasets',
-                    'authorized_visualisations',
-                ]
-            },
+            {'fields': ['authorized_master_datasets', 'authorized_data_cut_datasets', 'authorized_visualisations',]},
         ),
     ]
     readonly_fields = ['sso_id']
@@ -230,16 +196,13 @@ class AppUserAdmin(UserAdmin):
             )
 
         start_all_applications_permission = Permission.objects.get(
-            codename='start_all_applications',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+            codename='start_all_applications', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         )
         develop_visualisations_permission = Permission.objects.get(
-            codename='develop_visualisations',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+            codename='develop_visualisations', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         )
         access_appstream_permission = Permission.objects.get(
-            codename='access_appstream',
-            content_type=ContentType.objects.get_for_model(ApplicationInstance),
+            codename='access_appstream', content_type=ContentType.objects.get_for_model(ApplicationInstance),
         )
 
         if 'can_start_all_applications' in form.cleaned_data:
@@ -284,16 +247,10 @@ class AppUserAdmin(UserAdmin):
                 obj.user_permissions.remove(access_appstream_permission)
                 log_change('Removed can_access_appstream permission')
 
-        current_datasets = set(
-            DataSet.objects.live().filter(datasetuserpermission__user=obj)
-        )
+        current_datasets = set(DataSet.objects.live().filter(datasetuserpermission__user=obj))
         authorized_datasets = set(
-            form.cleaned_data.get(
-                'authorized_master_datasets', DataSet.objects.none()
-            ).union(
-                form.cleaned_data.get(
-                    'authorized_data_cut_datasets', DataSet.objects.none()
-                )
+            form.cleaned_data.get('authorized_master_datasets', DataSet.objects.none()).union(
+                form.cleaned_data.get('authorized_data_cut_datasets', DataSet.objects.none())
             )
         )
 
@@ -306,28 +263,20 @@ class AppUserAdmin(UserAdmin):
 
         if 'authorized_visualisations' in form.cleaned_data:
             current_visualisations = ApplicationTemplate.objects.filter(
-                application_type='VISUALISATION',
-                applicationtemplateuserpermission__user=obj,
+                application_type='VISUALISATION', applicationtemplateuserpermission__user=obj,
             )
             for application_template in form.cleaned_data['authorized_visualisations']:
                 if application_template not in current_visualisations.all():
                     ApplicationTemplateUserPermission.objects.create(
                         application_template=application_template, user=obj
                     )
-                    log_change(
-                        'Added application {} permission'.format(application_template)
-                    )
+                    log_change('Added application {} permission'.format(application_template))
             for application_template in current_visualisations:
-                if (
-                    application_template
-                    not in form.cleaned_data['authorized_visualisations']
-                ):
+                if application_template not in form.cleaned_data['authorized_visualisations']:
                     ApplicationTemplateUserPermission.objects.filter(
                         application_template=application_template, user=obj
                     ).delete()
-                    log_change(
-                        'Removed application {} permission'.format(application_template)
-                    )
+                    log_change('Removed application {} permission'.format(application_template))
 
         super().save_model(request, obj, form, change)
 

@@ -8,9 +8,7 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render
 
-from dataworkspace.apps.api_v1.views import (
-    get_api_visible_application_instance_by_public_host,
-)
+from dataworkspace.apps.api_v1.views import get_api_visible_application_instance_by_public_host
 from dataworkspace.apps.applications.models import (
     ApplicationInstance,
     ApplicationTemplate,
@@ -51,26 +49,18 @@ TOOL_LOADING_MESSAGES = [
 
 @csp_exempt
 def application_spawning_html_view(request, public_host):
-    return (
-        application_spawning_html_GET(request, public_host)
-        if request.method == 'GET'
-        else HttpResponse(status=405)
-    )
+    return application_spawning_html_GET(request, public_host) if request.method == 'GET' else HttpResponse(status=405)
 
 
 def application_spawning_html_GET(request, public_host):
     try:
-        application_instance = get_api_visible_application_instance_by_public_host(
-            public_host
-        )
+        application_instance = get_api_visible_application_instance_by_public_host(public_host)
     except ApplicationInstance.DoesNotExist:
         return public_error_500_html_view(request)
 
     context = {
         'application_nice_name': application_instance.application_template.nice_name,
-        'loading_message': TOOL_LOADING_MESSAGES[
-            random.randint(0, len(TOOL_LOADING_MESSAGES) - 1)
-        ],
+        'loading_message': TOOL_LOADING_MESSAGES[random.randint(0, len(TOOL_LOADING_MESSAGES) - 1)],
     }
     return render(request, 'spawning.html', context, status=202)
 
@@ -86,9 +76,7 @@ def tools_html_view(request):
 
 
 def tools_html_GET(request):
-    sso_id_hex = hashlib.sha256(
-        str(request.user.profile.sso_id).encode('utf-8')
-    ).hexdigest()
+    sso_id_hex = hashlib.sha256(str(request.user.profile.sso_id).encode('utf-8')).hexdigest()
     sso_id_hex_short = sso_id_hex[:8]
 
     application_instances = {
@@ -99,9 +87,7 @@ def tools_html_GET(request):
     }
 
     def link(application_template):
-        public_host = application_template.host_pattern.replace(
-            '<user>', sso_id_hex_short
-        )
+        public_host = application_template.host_pattern.replace('<user>', sso_id_hex_short)
         return f'{request.scheme}://{public_host}.{settings.APPLICATION_ROOT_DOMAIN}/'
 
     return render(
@@ -115,9 +101,7 @@ def tools_html_GET(request):
                     'link': link(application_template),
                     'instance': application_instances.get(application_template, None),
                 }
-                for application_template in ApplicationTemplate.objects.all().order_by(
-                    'name'
-                )
+                for application_template in ApplicationTemplate.objects.all().order_by('name')
                 for application_link in [link(application_template)]
                 if application_template.visible
             ],
@@ -129,14 +113,10 @@ def tools_html_GET(request):
 
 def tools_html_POST(request):
     public_host = request.POST['public_host']
-    redirect_target = {'root': 'root', 'applications:tools': 'applications:tools'}[
-        request.POST['redirect_target']
-    ]
+    redirect_target = {'root': 'root', 'applications:tools': 'applications:tools'}[request.POST['redirect_target']]
     try:
         application_instance = ApplicationInstance.objects.get(
-            owner=request.user,
-            public_host=public_host,
-            state__in=['RUNNING', 'SPAWNING'],
+            owner=request.user, public_host=public_host, state__in=['RUNNING', 'SPAWNING'],
         )
     except ApplicationInstance.DoesNotExist:
         # The user could force a POST for any public_host, and will be able to
@@ -145,17 +125,13 @@ def tools_html_POST(request):
         messages.success(request, 'Stopped')
     else:
         stop_spawner_and_application(application_instance)
-        messages.success(
-            request, 'Stopped ' + application_instance.application_template.nice_name
-        )
+        messages.success(request, 'Stopped ' + application_instance.application_template.nice_name)
     return redirect(redirect_target)
 
 
 def gitlab_api_v4(path, params=()):
     return requests.get(
-        f'{settings.GITLAB_URL}api/v4/{path}',
-        params=params,
-        headers={'PRIVATE-TOKEN': settings.GITLAB_TOKEN},
+        f'{settings.GITLAB_URL}api/v4/{path}', params=params, headers={'PRIVATE-TOKEN': settings.GITLAB_TOKEN},
     ).json()
 
 
@@ -171,11 +147,7 @@ def visualisations_html_view(request):
 
 def visualisations_html_GET(request):
     users = gitlab_api_v4(
-        f'/users',
-        params=(
-            ('extern_uid', request.user.profile.sso_id),
-            ('provider', 'oauth2_generic'),
-        ),
+        f'/users', params=(('extern_uid', request.user.profile.sso_id), ('provider', 'oauth2_generic'),),
     )
     has_gitlab_user = bool(users)
 
@@ -190,8 +162,7 @@ def visualisations_html_GET(request):
         params = (('visibility', 'internal'),)
 
     projects = gitlab_api_v4(
-        f'groups/{settings.GITLAB_VISUALISATIONS_GROUP}/projects',
-        params=(('archived', 'false'),) + params,
+        f'groups/{settings.GITLAB_VISUALISATIONS_GROUP}/projects', params=(('archived', 'false'),) + params,
     )
 
     def branch_sort_key(project):
@@ -207,9 +178,7 @@ def visualisations_html_GET(request):
 
     project_branches = {
         project['id']: sorted(
-            gitlab_api_v4(f'/projects/{project["id"]}/repository/branches'),
-            key=branch_sort_key(project),
-            reverse=True,
+            gitlab_api_v4(f'/projects/{project["id"]}/repository/branches'), key=branch_sort_key(project), reverse=True,
         )
         for project in projects
     }
@@ -221,8 +190,7 @@ def visualisations_html_GET(request):
         project['id']: has_gitlab_user
         and True
         in (
-            project_user['id'] == users[0]['id']
-            and project_user['access_level'] >= developer_access_level
+            project_user['id'] == users[0]['id'] and project_user['access_level'] >= developer_access_level
             for project_user in gitlab_api_v4(f'/projects/{project["id"]}/members/all')
         )
         for project in projects

@@ -9,13 +9,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='applicationinstance',
-            name='spawner_created_at',
-            field=models.DateTimeField(null=True),
+            model_name='applicationinstance', name='spawner_created_at', field=models.DateTimeField(null=True),
         ),
         migrations.AddField(
-            model_name='applicationinstance',
-            name='spawner_stopped_at',
-            field=models.DateTimeField(null=True),
+            model_name='applicationinstance', name='spawner_stopped_at', field=models.DateTimeField(null=True),
         ),
     ]

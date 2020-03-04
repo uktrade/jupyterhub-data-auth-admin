@@ -9,8 +9,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='applicationtemplate',
-            name='host_pattern',
-            field=models.CharField(max_length=128, unique=True),
+            model_name='applicationtemplate', name='host_pattern', field=models.CharField(max_length=128, unique=True),
         )
     ]

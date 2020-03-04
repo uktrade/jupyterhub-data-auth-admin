@@ -14,24 +14,17 @@ def reorder(apps, _):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('datasets', '0013_referencedatasetuploadlog_referencedatasetuploadlogrecord')
-    ]
+    dependencies = [('datasets', '0013_referencedatasetuploadlog_referencedatasetuploadlogrecord')]
 
     operations = [
         migrations.AlterModelOptions(
             name='referencedatasetfield',
-            options={
-                'ordering': ('sort_order',),
-                'verbose_name': 'Reference dataset field',
-            },
+            options={'ordering': ('sort_order',), 'verbose_name': 'Reference dataset field',},
         ),
         migrations.AddField(
             model_name='referencedataset',
             name='sort_direction',
-            field=models.IntegerField(
-                choices=[(1, 'Ascending'), (2, 'Descending')], default=1
-            ),
+            field=models.IntegerField(choices=[(1, 'Ascending'), (2, 'Descending')], default=1),
         ),
         migrations.AddField(
             model_name='referencedataset',
@@ -46,9 +39,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name='referencedatasetfield',
-            name='sort_order',
-            field=models.PositiveIntegerField(default=0),
+            model_name='referencedatasetfield', name='sort_order', field=models.PositiveIntegerField(default=0),
         ),
         migrations.RunPython(reorder, reverse_code=migrations.RunPython.noop),
     ]

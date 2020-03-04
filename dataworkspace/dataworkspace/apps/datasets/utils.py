@@ -8,9 +8,7 @@ from dataworkspace.apps.datasets.constants import DataSetType
 def find_dataset(dataset_uuid, user):
     dataset = get_object_or_404(DataSet.objects.live(), id=dataset_uuid)
 
-    if user.has_perm(
-        dataset_type_to_manage_unpublished_permission_codename(dataset.type)
-    ):
+    if user.has_perm(dataset_type_to_manage_unpublished_permission_codename(dataset.type)):
         return dataset
 
     if not dataset.published:

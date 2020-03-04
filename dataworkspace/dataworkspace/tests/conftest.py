@@ -5,9 +5,7 @@ from django.test import Client, TestCase
 
 @pytest.fixture
 def staff_user_data(db):
-    user = User.objects.create(
-        username='bob.testerson@test.com', is_staff=True, is_superuser=True
-    )
+    user = User.objects.create(username='bob.testerson@test.com', is_staff=True, is_superuser=True)
 
     return {
         'HTTP_SSO_PROFILE_EMAIL': user.email,
@@ -25,9 +23,7 @@ def staff_client(staff_user_data):
 
 @pytest.fixture
 def user_data(db):
-    user = User.objects.create(
-        username='frank.exampleson@test.com', is_staff=False, is_superuser=False
-    )
+    user = User.objects.create(username='frank.exampleson@test.com', is_staff=False, is_superuser=False)
 
     return {
         'HTTP_SSO_PROFILE_EMAIL': user.email,
@@ -46,9 +42,7 @@ def client(user_data):
 @pytest.fixture
 def sme_user(db):
     sme_group = Group.objects.get(name="Subject Matter Experts")
-    user = User.objects.create(
-        username='jane.sampledóttir@test.com', is_staff=True, is_superuser=False
-    )
+    user = User.objects.create(username='jane.sampledóttir@test.com', is_staff=True, is_superuser=False)
     sme_group.user_set.add(user)
     sme_group.save()
 

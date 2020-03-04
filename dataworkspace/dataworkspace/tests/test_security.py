@@ -24,9 +24,7 @@ def test_baseline_content_security_policy(client):
     assert policies == expected_policies
 
 
-def test_edit_reference_dataset_admin_pages_allow_inline_scripts_for_ckeditor_support(
-    staff_client
-):
+def test_edit_reference_dataset_admin_pages_allow_inline_scripts_for_ckeditor_support(staff_client):
     dataset = factories.ReferenceDatasetFactory.create()
 
     # Log into admin

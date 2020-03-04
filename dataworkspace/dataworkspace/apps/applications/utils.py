@@ -37,13 +37,9 @@ def application_template_and_data_from_host(public_host):
 
     # To utilise a database index if we end up with a lot of visualisations
     matching_visualisation = list(
-        ApplicationTemplate.objects.filter(
-            application_type='VISUALISATION', host_exact=public_host
-        )
+        ApplicationTemplate.objects.filter(application_type='VISUALISATION', host_exact=public_host)
     )
-    matching_templates = matching_visualisation or ApplicationTemplate.objects.filter(
-        application_type='TOOL'
-    )
+    matching_templates = matching_visualisation or ApplicationTemplate.objects.filter(application_type='TOOL')
 
     def public_host_pattern(application_template):
         # Historically didn't support standard named regex but used our own
@@ -53,19 +49,13 @@ def application_template_and_data_from_host(public_host):
         if '?P<' in application_template.host_pattern:
             return application_template.host_pattern
 
-        return (
-            '^'
-            + re.sub('<(.+?)>', '(?P<\\1>.*?)', application_template.host_pattern)
-            + '$'
-        )
+        return '^' + re.sub('<(.+?)>', '(?P<\\1>.*?)', application_template.host_pattern) + '$'
 
     # ... and then match on pattern/extract data
     matching = [
         (application_template, host_data.groupdict())
         for application_template in matching_templates
-        for host_data in [
-            re.match(public_host_pattern(application_template), public_host)
-        ]
+        for host_data in [re.match(public_host_pattern(application_template), public_host)]
         if host_data
     ]
     if not matching:
@@ -77,9 +67,7 @@ def application_template_and_data_from_host(public_host):
 
 
 def api_application_dict(application_instance):
-    spawner_state = get_spawner(
-        application_instance.application_template.spawner
-    ).state(
+    spawner_state = get_spawner(application_instance.application_template.spawner).state(
         application_instance.spawner_application_template_options,
         application_instance.created_date.replace(tzinfo=None),
         application_instance.spawner_application_instance_id,
@@ -89,13 +77,9 @@ def api_application_dict(application_instance):
     # Only pass through the database state if the spawner is running,
     # Otherwise, we are in an error condition, and so return the spawner
     # state, so the client (i.e. the proxy) knows to take action
-    api_state = (
-        application_instance.state if spawner_state == 'RUNNING' else spawner_state
-    )
+    api_state = application_instance.state if spawner_state == 'RUNNING' else spawner_state
 
-    sso_id_hex = hashlib.sha256(
-        str(application_instance.owner.profile.sso_id).encode('utf-8')
-    ).hexdigest()
+    sso_id_hex = hashlib.sha256(str(application_instance.owner.profile.sso_id).encode('utf-8')).hexdigest()
     sso_id_hex_short = sso_id_hex[:8]
 
     return {
@@ -110,19 +94,13 @@ def get_api_visible_application_instance_by_public_host(public_host):
     # spawning or running application, and if it's not spawning or running
     # it doesn't exist. 'STOPPING' an application is DELETEing it. This may
     # need to be changed in later versions for richer behaviour.
-    return ApplicationInstance.objects.get(
-        public_host=public_host, state__in=['RUNNING', 'SPAWNING']
-    )
+    return ApplicationInstance.objects.get(public_host=public_host, state__in=['RUNNING', 'SPAWNING'])
 
 
 def application_api_is_allowed(request, public_host):
-    application_template, host_data = application_template_and_data_from_host(
-        public_host
-    )
+    application_template, host_data = application_template_and_data_from_host(public_host)
 
-    request_sso_id_hex = hashlib.sha256(
-        str(request.user.profile.sso_id).encode('utf-8')
-    ).hexdigest()
+    request_sso_id_hex = hashlib.sha256(str(request.user.profile.sso_id).encode('utf-8')).hexdigest()
 
     def is_tool_and_correct_user_and_allowed_to_start():
         return (
@@ -160,12 +138,8 @@ def stop_spawner_and_application(application_instance):
 
 def set_application_stopped(application_instance):
     application_instance.state = 'STOPPED'
-    application_instance.single_running_or_spawning_integrity = str(
-        application_instance.id
-    )
-    application_instance.save(
-        update_fields=['state', 'single_running_or_spawning_integrity']
-    )
+    application_instance.single_running_or_spawning_integrity = str(application_instance.id)
+    application_instance.save(update_fields=['state', 'single_running_or_spawning_integrity'])
 
 
 def application_instance_max_cpu(application_instance):
@@ -176,9 +150,7 @@ def application_instance_max_cpu(application_instance):
 
     instance = urllib.parse.urlsplit(application_instance.proxy_url).hostname + ':8889'
     url = f'https://{settings.PROMETHEUS_DOMAIN}/api/v1/query'
-    params = {
-        'query': f'increase(precpu_stats__cpu_usage__total_usage{{instance="{instance}"}}[30s])[2h:30s]'
-    }
+    params = {'query': f'increase(precpu_stats__cpu_usage__total_usage{{instance="{instance}"}}[30s])[2h:30s]'}
     try:
         response = requests.get(url, params)
     except requests.RequestException:
@@ -209,13 +181,9 @@ def application_instance_max_cpu(application_instance):
 def kill_idle_fargate():
     logger.info('kill_idle_fargate: Start')
 
-    two_hours_ago = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
-        hours=-2
-    )
+    two_hours_ago = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-2)
     instances = ApplicationInstance.objects.filter(
-        spawner='FARGATE',
-        state__in=['RUNNING', 'SPAWNING'],
-        created_date__lt=two_hours_ago,
+        spawner='FARGATE', state__in=['RUNNING', 'SPAWNING'], created_date__lt=two_hours_ago,
     )
 
     for instance in instances:
@@ -227,9 +195,7 @@ def kill_idle_fargate():
         try:
             max_cpu, _ = application_instance_max_cpu(instance)
         except Exception:
-            logger.exception(
-                'kill_idle_fargate: Unable to find CPU usage for %s', instance
-            )
+            logger.exception('kill_idle_fargate: Unable to find CPU usage for %s', instance)
             continue
 
         logger.info('kill_idle_fargate: CPU usage for %s is %s', instance, max_cpu)
@@ -279,11 +245,7 @@ def populate_created_stopped_fargate():
         start_of_range = now + datetime.timedelta(hours=-hours - 1)
         end_of_range = now + datetime.timedelta(hours=-hours)
         instances = ApplicationInstance.objects.filter(
-            Q(
-                spawner='FARGATE',
-                created_date__gte=start_of_range,
-                created_date__lt=end_of_range,
-            )
+            Q(spawner='FARGATE', created_date__gte=start_of_range, created_date__lt=end_of_range,)
             & (Q(spawner_created_at__isnull=True) | Q(spawner_stopped_at__isnull=True))
         ).order_by('-created_date')
 
@@ -293,9 +255,7 @@ def populate_created_stopped_fargate():
             try:
                 options = json.loads(instance.spawner_application_template_options)
                 cluster_name = options['CLUSTER_NAME']
-                task_arn = json.loads(instance.spawner_application_instance_id)[
-                    'task_arn'
-                ]
+                task_arn = json.loads(instance.spawner_application_instance_id)['task_arn']
             except (ValueError, KeyError):
                 continue
 
@@ -310,9 +270,7 @@ def populate_created_stopped_fargate():
 
             if not task:
                 logger.info(
-                    'populate_created_stopped_fargate no task found %s %s',
-                    instance,
-                    task_arn,
+                    'populate_created_stopped_fargate no task found %s %s', instance, task_arn,
                 )
                 continue
 
@@ -327,9 +285,7 @@ def populate_created_stopped_fargate():
 
             if update_fields:
                 logger.info(
-                    'populate_created_stopped_fargate saving: %s %s',
-                    instance,
-                    update_fields,
+                    'populate_created_stopped_fargate saving: %s %s', instance, update_fields,
                 )
                 instance.save(update_fields=update_fields)
 
@@ -365,9 +321,7 @@ def delete_unused_datasets_users():
             )
             schemas = [result[0] for result in cur.fetchall()]
 
-        logger.info(
-            'delete_unused_datasets_users: waiting in case they were just created'
-        )
+        logger.info('delete_unused_datasets_users: waiting in case they were just created')
         gevent.sleep(15)
 
         # We want to be able to delete db users created, but then _not_ associated with an
@@ -375,14 +329,10 @@ def delete_unused_datasets_users():
         # that were created but then the server went down before the application was created.
         in_use_usenames = set(
             ApplicationInstanceDbUsers.objects.filter(
-                db=database_obj,
-                db_username__in=usenames,
-                application_instance__state__in=['RUNNING', 'SPAWNING'],
+                db=database_obj, db_username__in=usenames, application_instance__state__in=['RUNNING', 'SPAWNING'],
             ).values_list('db_username', flat=True)
         )
-        not_in_use_usernames = [
-            usename for usename in usenames if usename not in in_use_usenames
-        ]
+        not_in_use_usernames = [usename for usename in usenames if usename not in in_use_usenames]
 
         schema_revokes = [
             'REVOKE USAGE ON SCHEMA {} FROM {};',
@@ -400,8 +350,7 @@ def delete_unused_datasets_users():
                 for usename in not_in_use_usernames:
                     try:
                         logger.info(
-                            'delete_unused_datasets_users: revoking credentials for %s',
-                            usename,
+                            'delete_unused_datasets_users: revoking credentials for %s', usename,
                         )
                         cur.execute(
                             sql.SQL('REVOKE CONNECT ON DATABASE {} FROM {};').format(
@@ -409,9 +358,7 @@ def delete_unused_datasets_users():
                             )
                         )
                         cur.execute(
-                            sql.SQL(
-                                'REVOKE ALL PRIVILEGES ON DATABASE {} FROM {};'
-                            ).format(
+                            sql.SQL('REVOKE ALL PRIVILEGES ON DATABASE {} FROM {};').format(
                                 sql.Identifier(database_name), sql.Identifier(usename)
                             )
                         )
@@ -420,10 +367,7 @@ def delete_unused_datasets_users():
                             for schema_revoke in schema_revokes:
                                 try:
                                     cur.execute(
-                                        sql.SQL(schema_revoke).format(
-                                            sql.Identifier(schema),
-                                            sql.Identifier(usename),
-                                        )
+                                        sql.SQL(schema_revoke).format(sql.Identifier(schema), sql.Identifier(usename),)
                                     )
                                 except Exception:
                                     # This is likely to happen for private schemas where the current user
@@ -436,20 +380,13 @@ def delete_unused_datasets_users():
                                         usename,
                                     )
 
-                        logger.info(
-                            'delete_unused_datasets_users: dropping user %s', usename
-                        )
-                        cur.execute(
-                            sql.SQL('DROP USER {};').format(sql.Identifier(usename))
-                        )
+                        logger.info('delete_unused_datasets_users: dropping user %s', usename)
+                        cur.execute(sql.SQL('DROP USER {};').format(sql.Identifier(usename)))
                     except Exception:
-                        logger.exception(
-                            'delete_unused_datasets_users: Failed deleting %s', usename
-                        )
+                        logger.exception('delete_unused_datasets_users: Failed deleting %s', usename)
                     else:
                         logger.info(
-                            'delete_unused_datasets_users: revoked credentials for and dropped %s',
-                            usename,
+                            'delete_unused_datasets_users: revoked credentials for and dropped %s', usename,
                         )
 
     logger.info('delete_unused_datasets_users: End')

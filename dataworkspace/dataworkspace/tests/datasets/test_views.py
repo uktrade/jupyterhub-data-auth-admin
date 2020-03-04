@@ -11,15 +11,10 @@ from dataworkspace.tests.common import get_http_sso_data
 
 @pytest.mark.parametrize(
     'eligibility_criteria,view_name',
-    [
-        ([], 'datasets:request_access'),
-        (['Criteria 1', 'Criteria 2'], 'datasets:eligibility_criteria'),
-    ],
+    [([], 'datasets:request_access'), (['Criteria 1', 'Criteria 2'], 'datasets:eligibility_criteria'),],
 )
 def test_dataset_has_request_access_link(client, eligibility_criteria, view_name):
-    ds = factories.DataSetFactory.create(
-        eligibility_criteria=eligibility_criteria, published=True
-    )
+    ds = factories.DataSetFactory.create(eligibility_criteria=eligibility_criteria, published=True)
 
     factories.SourceLinkFactory(dataset=ds)
 
@@ -32,13 +27,9 @@ def test_dataset_has_request_access_link(client, eligibility_criteria, view_name
 
 
 def test_eligibility_criteria_list(client):
-    ds = factories.DataSetFactory.create(
-        eligibility_criteria=['Criteria 1', 'Criteria 2'], published=True
-    )
+    ds = factories.DataSetFactory.create(eligibility_criteria=['Criteria 1', 'Criteria 2'], published=True)
 
-    response = client.get(
-        reverse('datasets:eligibility_criteria', kwargs={'dataset_uuid': ds.id})
-    )
+    response = client.get(reverse('datasets:eligibility_criteria', kwargs={'dataset_uuid': ds.id}))
 
     assert response.status_code == 200
     assert 'Criteria 1' in str(response.content)
@@ -47,15 +38,10 @@ def test_eligibility_criteria_list(client):
 
 @pytest.mark.parametrize(
     'meet_criteria,redirect_view',
-    [
-        ('yes', 'datasets:request_access'),
-        ('no', 'datasets:eligibility_criteria_not_met'),
-    ],
+    [('yes', 'datasets:request_access'), ('no', 'datasets:eligibility_criteria_not_met'),],
 )
 def test_submit_eligibility_criteria(client, test_case, meet_criteria, redirect_view):
-    ds = factories.DataSetFactory.create(
-        eligibility_criteria=['Criteria 1', 'Criteria 3'], published=True
-    )
+    ds = factories.DataSetFactory.create(eligibility_criteria=['Criteria 1', 'Criteria 3'], published=True)
 
     response = client.post(
         reverse('datasets:eligibility_criteria', kwargs={'dataset_uuid': ds.id}),
@@ -63,15 +49,11 @@ def test_submit_eligibility_criteria(client, test_case, meet_criteria, redirect_
         follow=True,
     )
 
-    test_case.assertRedirects(
-        response, reverse(redirect_view, kwargs={'dataset_uuid': ds.id})
-    )
+    test_case.assertRedirects(response, reverse(redirect_view, kwargs={'dataset_uuid': ds.id}))
 
 
 def test_request_access_form(client, mocker):
-    create_zendesk_ticket = mocker.patch(
-        'dataworkspace.apps.datasets.views.create_zendesk_ticket'
-    )
+    create_zendesk_ticket = mocker.patch('dataworkspace.apps.datasets.views.create_zendesk_ticket')
 
     ds = factories.DataSetFactory.create(published=True)
 
@@ -91,9 +73,7 @@ def test_request_access_form(client, mocker):
 def test_find_datasets_combines_results(client):
     factories.DataSetFactory.create(published=False, name='Unpublished search dataset')
     ds = factories.DataSetFactory.create(published=True, name='A search dataset')
-    rds = factories.ReferenceDatasetFactory.create(
-        published=True, name='A search reference dataset'
-    )
+    rds = factories.ReferenceDatasetFactory.create(published=True, name='A search reference dataset')
 
     response = client.get(reverse('datasets:find_datasets'), {"q": "search"})
 
@@ -121,9 +101,7 @@ def test_find_datasets_filters_by_query(client):
     factories.ReferenceDatasetFactory.create(published=True, name='A reference dataset')
 
     ds = factories.DataSetFactory.create(published=True, name='A new dataset')
-    rds = factories.ReferenceDatasetFactory.create(
-        published=True, name='A new reference dataset'
-    )
+    rds = factories.ReferenceDatasetFactory.create(published=True, name='A new reference dataset')
 
     response = client.get(reverse('datasets:find_datasets'), {"q": "new"})
 
@@ -149,9 +127,7 @@ def test_find_datasets_filters_by_query(client):
 def test_find_datasets_filters_by_use(client):
     factories.DataSetFactory.create(published=True, type=1, name='A dataset')
     ds = factories.DataSetFactory.create(published=True, type=2, name='A new dataset')
-    rds = factories.ReferenceDatasetFactory.create(
-        published=True, name='A new reference dataset'
-    )
+    rds = factories.ReferenceDatasetFactory.create(published=True, name='A new reference dataset')
 
     response = client.get(reverse('datasets:find_datasets'), {"use": [0, 2]})
 
@@ -182,9 +158,7 @@ def test_find_datasets_filters_by_source(client):
     ds = factories.DataSetFactory.create(published=True, type=2, name='A new dataset')
     ds.source_tags.set([source, factories.SourceTagFactory()])
 
-    rds = factories.ReferenceDatasetFactory.create(
-        published=True, name='A new reference dataset'
-    )
+    rds = factories.ReferenceDatasetFactory.create(published=True, name='A new reference dataset')
     rds.source_tags.set([source])
 
     response = client.get(reverse('datasets:find_datasets'), {"source": [source.id]})
@@ -215,24 +189,15 @@ def test_find_datasets_filters_by_source(client):
         (['manage_unpublished_datacut_datasets'], {"Datacut dataset"}),
         (['manage_unpublished_reference_datasets'], {"Reference dataset"}),
         (
-            [
-                'manage_unpublished_master_datasets',
-                'manage_unpublished_datacut_datasets',
-            ],
+            ['manage_unpublished_master_datasets', 'manage_unpublished_datacut_datasets',],
             {"Master dataset", "Datacut dataset"},
         ),
         (
-            [
-                'manage_unpublished_master_datasets',
-                'manage_unpublished_reference_datasets',
-            ],
+            ['manage_unpublished_master_datasets', 'manage_unpublished_reference_datasets',],
             {"Master dataset", "Reference dataset"},
         ),
         (
-            [
-                'manage_unpublished_datacut_datasets',
-                'manage_unpublished_reference_datasets',
-            ],
+            ['manage_unpublished_datacut_datasets', 'manage_unpublished_reference_datasets',],
             {"Datacut dataset", "Reference dataset"},
         ),
         (
@@ -246,9 +211,7 @@ def test_find_datasets_filters_by_source(client):
     ),
 )
 @pytest.mark.django_db
-def test_find_datasets_includes_unpublished_results_based_on_permissions(
-    permissions, result_dataset_names
-):
+def test_find_datasets_includes_unpublished_results_based_on_permissions(permissions, result_dataset_names):
     user = User.objects.create(is_staff=True)
     perms = Permission.objects.filter(codename__in=permissions).all()
     user.user_permissions.add(*perms)
@@ -256,28 +219,21 @@ def test_find_datasets_includes_unpublished_results_based_on_permissions(
 
     client = Client(**get_http_sso_data(user))
 
-    factories.DataSetFactory.create(
-        published=False, type=DataSetType.MASTER.value, name='Master dataset'
-    )
-    factories.DataSetFactory.create(
-        published=False, type=DataSetType.DATACUT.value, name='Datacut dataset'
-    )
+    factories.DataSetFactory.create(published=False, type=DataSetType.MASTER.value, name='Master dataset')
+    factories.DataSetFactory.create(published=False, type=DataSetType.DATACUT.value, name='Datacut dataset')
     factories.ReferenceDatasetFactory.create(published=False, name='Reference dataset')
 
     response = client.get(reverse('datasets:find_datasets'))
 
     assert response.status_code == 200
-    assert {
-        dataset['name'] for dataset in response.context["datasets"]
-    } == result_dataset_names
+    assert {dataset['name'] for dataset in response.context["datasets"]} == result_dataset_names
 
 
 def test_request_access_success_content(client):
     ds = factories.DataSetFactory.create(published=True, type=1, name='A dataset')
 
     response = client.get(
-        reverse('datasets:request_access_success', kwargs={"dataset_uuid": ds.id}),
-        {"ticket": "test-ticket-id"},
+        reverse('datasets:request_access_success', kwargs={"dataset_uuid": ds.id}), {"ticket": "test-ticket-id"},
     )
 
     assert (

@@ -18,16 +18,10 @@ DEBUG = 'dataworkspace.test' in env['ALLOWED_HOSTS']
 
 def aws_fargate_private_ip():
     with urllib.request.urlopen('http://169.254.170.2/v2/metadata') as response:
-        return json.loads(response.read().decode('utf-8'))['Containers'][0]['Networks'][
-            0
-        ]['IPv4Addresses'][0]
+        return json.loads(response.read().decode('utf-8'))['Containers'][0]['Networks'][0]['IPv4Addresses'][0]
 
 
-ALLOWED_HOSTS = (
-    (env['ALLOWED_HOSTS'])
-    if DEBUG
-    else (env['ALLOWED_HOSTS'] + [aws_fargate_private_ip()])
-)
+ALLOWED_HOSTS = (env['ALLOWED_HOSTS']) if DEBUG else (env['ALLOWED_HOSTS'] + [aws_fargate_private_ip()])
 
 INTERNAL_IPS = ['127.0.0.1'] if DEBUG else []
 
@@ -69,9 +63,7 @@ MIDDLEWARE = [
     'csp.middleware.CSPMiddleware',
 ]
 
-AUTHENTICATION_BACKENDS = [
-    'dataworkspace.apps.accounts.backends.AuthbrokerBackendUsernameIsEmail'
-]
+AUTHENTICATION_BACKENDS = ['dataworkspace.apps.accounts.backends.AuthbrokerBackendUsernameIsEmail']
 AUTHBROKER_URL = env['AUTHBROKER_URL']
 AUTHBROKER_CLIENT_ID = env['AUTHBROKER_CLIENT_ID']
 AUTHBROKER_CLIENT_SECRET = env['AUTHBROKER_CLIENT_SECRET']
@@ -98,10 +90,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'dataworkspace.context_processors.common',
             ],
-            'loaders': [
-                'django.template.loaders.filesystem.Loader',
-                'django.template.loaders.app_directories.Loader',
-            ],
+            'loaders': ['django.template.loaders.filesystem.Loader', 'django.template.loaders.app_directories.Loader',],
         },
     }
 ]
@@ -232,13 +221,9 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 GOOGLE_DATA_STUDIO_CONNECTOR_PATTERN = env['GOOGLE_DATA_STUDIO_CONNECTOR_PATTERN']
 
-S3_ASSUME_ROLE_POLICY_DOCUMENT = base64.b64decode(
-    env['S3_ASSUME_ROLE_POLICY_DOCUMENT_BASE64']
-).decode('utf-8')
+S3_ASSUME_ROLE_POLICY_DOCUMENT = base64.b64decode(env['S3_ASSUME_ROLE_POLICY_DOCUMENT_BASE64']).decode('utf-8')
 S3_POLICY_NAME = env['S3_POLICY_NAME']
-S3_POLICY_DOCUMENT_TEMPLATE = base64.b64decode(
-    env['S3_POLICY_DOCUMENT_TEMPLATE_BASE64']
-).decode('utf-8')
+S3_POLICY_DOCUMENT_TEMPLATE = base64.b64decode(env['S3_POLICY_DOCUMENT_TEMPLATE_BASE64']).decode('utf-8')
 S3_PERMISSIONS_BOUNDARY_ARN = env['S3_PERMISSIONS_BOUNDARY_ARN']
 S3_ROLE_PREFIX = env['S3_ROLE_PREFIX']
 
@@ -278,9 +263,7 @@ FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 SEARCH_RESULTS_DATASETS_PER_PAGE = 7
 
-REFERENCE_DATASET_PREVIEW_NUM_OF_ROWS = int(
-    env.get('REFERENCE_DATASET_PREVIEW_NUM_OF_ROWS', 100)
-)
+REFERENCE_DATASET_PREVIEW_NUM_OF_ROWS = int(env.get('REFERENCE_DATASET_PREVIEW_NUM_OF_ROWS', 100))
 
 # We explicitly allow some environments to not have a connection to GitLab
 GITLAB_URL = env.get('GITLAB_URL')
@@ -306,9 +289,7 @@ DATABASES = {
     },
 }
 
-DATABASES_DATA = {
-    db: db_config for db, db_config in DATABASES.items() if db in env['DATA_DB']
-}
+DATABASES_DATA = {db: db_config for db, db_config in DATABASES.items() if db in env['DATA_DB']}
 
 # Only used when collectstatic is run
 STATIC_ROOT = '/home/django/static/'

@@ -9,13 +9,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='dataset',
-            name='number_of_downloads',
-            field=models.PositiveIntegerField(default=0),
+            model_name='dataset', name='number_of_downloads', field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='referencedataset',
-            name='number_of_downloads',
-            field=models.PositiveIntegerField(default=0),
+            model_name='referencedataset', name='number_of_downloads', field=models.PositiveIntegerField(default=0),
         ),
     ]

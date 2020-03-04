@@ -16,8 +16,4 @@ class Migration(migrations.Migration):
 
     dependencies = [('datasets', '0026_add_dataset_type_proxy_models')]
 
-    operations = [
-        migrations.RunPython(
-            migrate_data_cut_to_master_dataset, reverse_code=migrations.RunPython.noop
-        )
-    ]
+    operations = [migrations.RunPython(migrate_data_cut_to_master_dataset, reverse_code=migrations.RunPython.noop)]

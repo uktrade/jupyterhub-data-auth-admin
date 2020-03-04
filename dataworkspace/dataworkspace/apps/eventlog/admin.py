@@ -30,8 +30,7 @@ class EventLogAdmin(admin.ModelAdmin):
     def user_link(self, obj):
         return format_html(
             '<a href="{}">{}</a>'.format(
-                reverse('admin:auth_user_change', args=(obj.user.id,)),
-                obj.user.get_full_name(),
+                reverse('admin:auth_user_change', args=(obj.user.id,)), obj.user.get_full_name(),
             )
         )
 
@@ -42,10 +41,7 @@ class EventLogAdmin(admin.ModelAdmin):
             return None
 
         try:
-            url = reverse(
-                admin_urlname(obj.related_object._meta, 'change'),
-                args=(obj.related_object.id,),
-            )
+            url = reverse(admin_urlname(obj.related_object._meta, 'change'), args=(obj.related_object.id,),)
         except NoReverseMatch:
             return obj.related_object
 
@@ -75,9 +71,7 @@ class EventLogAdmin(admin.ModelAdmin):
     def export_events(self, request, queryset):
         field_names = ['timestamp', 'user', 'event_type', 'related_object', 'extra']
         response = HttpResponse(content_type='text/csv')
-        response[
-            'Content-Disposition'
-        ] = 'attachment; filename=event-log-{}.csv'.format(
+        response['Content-Disposition'] = 'attachment; filename=event-log-{}.csv'.format(
             datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         )
         writer = csv.DictWriter(response, field_names, quoting=csv.QUOTE_NONNUMERIC)

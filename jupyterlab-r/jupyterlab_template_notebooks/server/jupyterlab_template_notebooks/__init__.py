@@ -31,14 +31,8 @@ class TemplateListHandler(IPythonHandler):
         template_list = json.dumps(
             {
                 'templates': [
-                    {
-                        'path': '/templates/' + PurePosixPath(path).name,
-                        'name': PurePosixPath(path).name,
-                    }
-                    for path in glob(
-                        str(PurePosixPath(os.path.realpath(__file__)).parent)
-                        + '/*.ipynb'
-                    )
+                    {'path': '/templates/' + PurePosixPath(path).name, 'name': PurePosixPath(path).name,}
+                    for path in glob(str(PurePosixPath(os.path.realpath(__file__)).parent) + '/*.ipynb')
                 ]
             }
         ).encode('utf-8')
@@ -72,8 +66,7 @@ class TemplateContentsHandler(IPythonHandler):
             file_contents_raw
             if file_location.suffix != '.ipynb'
             else file_contents_raw.replace(
-                b'<img src=\\"',
-                b'<img src=\\"https://' + self.request.headers['host'].encode('utf-8'),
+                b'<img src=\\"', b'<img src=\\"https://' + self.request.headers['host'].encode('utf-8'),
             )
         )
 

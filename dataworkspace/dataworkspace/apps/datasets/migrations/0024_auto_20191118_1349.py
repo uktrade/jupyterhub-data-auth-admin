@@ -22,27 +22,16 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='referencedataset',
-            name='initial_published_at',
-            field=models.DateField(blank=True, null=True),
+            model_name='referencedataset', name='initial_published_at', field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='referencedataset',
-            name='published_at',
-            field=models.DateField(blank=True, null=True),
+            model_name='referencedataset', name='published_at', field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='referencedataset',
-            name='published_major_version',
-            field=models.IntegerField(default=0),
+            model_name='referencedataset', name='published_major_version', field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='referencedataset',
-            name='published_minor_version',
-            field=models.IntegerField(default=0),
+            model_name='referencedataset', name='published_minor_version', field=models.IntegerField(default=0),
         ),
-        migrations.RunPython(
-            set_default_values_of_published_datasets,
-            reverse_code=migrations.RunPython.noop,
-        ),
+        migrations.RunPython(set_default_values_of_published_datasets, reverse_code=migrations.RunPython.noop,),
     ]

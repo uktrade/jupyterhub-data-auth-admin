@@ -14,8 +14,4 @@ class Migration(migrations.Migration):
 
     dependencies = [('datasets', '0006_auto_20190813_1544')]
 
-    operations = [
-        migrations.RunPython(
-            generate_column_name, reverse_code=migrations.RunPython.noop
-        )
-    ]
+    operations = [migrations.RunPython(generate_column_name, reverse_code=migrations.RunPython.noop)]

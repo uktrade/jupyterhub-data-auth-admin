@@ -24,11 +24,7 @@ class Migration(migrations.Migration):
                 to=settings.AUTH_USER_MODEL,
             ),
         ),
-        migrations.AddField(
-            model_name='dataset',
-            name='deleted',
-            field=models.BooleanField(default=False),
-        ),
+        migrations.AddField(model_name='dataset', name='deleted', field=models.BooleanField(default=False),),
         migrations.AddField(
             model_name='dataset',
             name='updated_by',

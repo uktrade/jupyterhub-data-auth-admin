@@ -16,13 +16,7 @@ async def async_main(logger, target_file, url, username, password):
         await asyncio.sleep(10)
         try:
             logger.debug('Fetching from %s', url)
-            headers = (
-                (
-                    b'Authorization',
-                    b'Basic '
-                    + base64.b64encode(f'{username}:{password}'.encode('ascii')),
-                ),
-            )
+            headers = ((b'Authorization', b'Basic ' + base64.b64encode(f'{username}:{password}'.encode('ascii')),),)
             code, _, body = await request(b'GET', url, headers=headers)
             logger.debug('Code %s', code)
             raw_json = await buffered(body)
@@ -31,15 +25,8 @@ async def async_main(logger, target_file, url, username, password):
             logger.debug('Found %s', applications)
             file_sd_config = [
                 {
-                    'labels': {
-                        'job': 'tools',
-                        'tool_name': application['name'],
-                        'user': application['user'],
-                    },
-                    'targets': [
-                        urllib.parse.urlsplit(application['proxy_url']).hostname
-                        + ':8889'
-                    ],
+                    'labels': {'job': 'tools', 'tool_name': application['name'], 'user': application['user'],},
+                    'targets': [urllib.parse.urlsplit(application['proxy_url']).hostname + ':8889'],
                 }
                 for application in applications
                 if application['proxy_url'] is not None

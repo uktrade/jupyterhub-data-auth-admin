@@ -21,9 +21,7 @@ async def async_main():
             'content': (await request.read()).decode(),
             'headers': dict(request.headers),
         }
-        return web.json_response(
-            data, status=405, headers={'from-upstream': 'upstream-header-value'}
-        )
+        return web.json_response(data, status=405, headers={'from-upstream': 'upstream-header-value'})
 
     async def handle_websockets(request):
         wsock = web.WebSocketResponse()
@@ -43,11 +41,7 @@ async def async_main():
 
     upstream = web.Application()
     upstream.add_routes(
-        [
-            web.get('/http', handle_http),
-            web.patch('/http', handle_http),
-            web.get('/websockets', handle_websockets),
-        ]
+        [web.get('/http', handle_http), web.patch('/http', handle_http), web.get('/websockets', handle_websockets),]
     )
     upstream_runner = web.AppRunner(upstream)
     await upstream_runner.setup()

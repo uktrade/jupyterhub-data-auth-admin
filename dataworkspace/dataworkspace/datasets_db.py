@@ -17,9 +17,7 @@ def get_columns(database_name, schema=None, table=None, query=None):
     else:
         raise ValueError("Either table or query are required")
 
-    with psycopg2.connect(
-        database_dsn(settings.DATABASES_DATA[database_name])
-    ) as connection:
+    with psycopg2.connect(database_dsn(settings.DATABASES_DATA[database_name])) as connection:
         try:
             return query_columns(connection, source)
         except Exception:

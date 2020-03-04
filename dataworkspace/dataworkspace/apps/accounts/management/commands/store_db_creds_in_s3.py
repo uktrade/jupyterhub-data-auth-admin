@@ -26,9 +26,7 @@ class Command(BaseCommand):
 
             source_tables = source_tables_for_user(user)
             db_role_schema_suffix = db_role_schema_suffix_for_user(user)
-            creds = new_private_database_credentials(
-                db_role_schema_suffix, source_tables, postgres_user(user.email)
-            )
+            creds = new_private_database_credentials(db_role_schema_suffix, source_tables, postgres_user(user.email))
             write_credentials_to_bucket(user, creds)
             self.stdout.write(str(creds))
 

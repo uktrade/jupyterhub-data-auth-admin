@@ -12,10 +12,7 @@ class Migration(migrations.Migration):
             name='datacutdataset',
             options={
                 'permissions': [
-                    (
-                        'manage_unpublished_datacut_datasets',
-                        'Manage (create, view, edit) unpublished datacut datasets',
-                    )
+                    ('manage_unpublished_datacut_datasets', 'Manage (create, view, edit) unpublished datacut datasets',)
                 ],
                 'verbose_name': 'Data Cut Dataset',
             },
@@ -24,10 +21,7 @@ class Migration(migrations.Migration):
             name='masterdataset',
             options={
                 'permissions': [
-                    (
-                        'manage_unpublished_master_datasets',
-                        'Manage (create, view, edit) unpublished master datasets',
-                    )
+                    ('manage_unpublished_master_datasets', 'Manage (create, view, edit) unpublished master datasets',)
                 ],
                 'verbose_name': 'Master Dataset',
             },
@@ -51,8 +45,6 @@ class Migration(migrations.Migration):
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='customdatasetquery',
-            name='reviewed',
-            field=models.BooleanField(default=False),
+            model_name='customdatasetquery', name='reviewed', field=models.BooleanField(default=False),
         ),
     ]

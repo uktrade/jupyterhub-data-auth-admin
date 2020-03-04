@@ -34,15 +34,10 @@ def ec2_request(query):
         def canonical_request():
             canonical_uri = '/'
             quoted_query = sorted(
-                (urllib.parse.quote(key, safe='~'), urllib.parse.quote(value, safe='~'))
-                for key, value in query.items()
+                (urllib.parse.quote(key, safe='~'), urllib.parse.quote(value, safe='~')) for key, value in query.items()
             )
-            canonical_querystring = '&'.join(
-                f'{key}={value}' for key, value in quoted_query
-            )
-            canonical_headers = ''.join(
-                f'{key}:{headers[key]}\n' for key in header_keys
-            )
+            canonical_querystring = '&'.join(f'{key}={value}' for key, value in quoted_query)
+            canonical_headers = ''.join(f'{key}:{headers[key]}\n' for key in header_keys)
 
             return (
                 f'POST\n{canonical_uri}\n{canonical_querystring}\n'
@@ -73,9 +68,7 @@ def ec2_request(query):
     url = f'https://{aws_ec2_host}/?{query_string}'
 
     logger.debug('Making request to %s...', url)
-    request = urllib.request.Request(
-        url, headers=final_headers, data=b'', method='POST'
-    )
+    request = urllib.request.Request(url, headers=final_headers, data=b'', method='POST')
     try:
         with urllib.request.urlopen(request) as response:
             response_bytes = response.read()
@@ -101,27 +94,20 @@ aws_ec2_host = os.environ['AWS_EC2_HOST']
 logger.debug('Parsing environment... (aws_ec2_host: %s)', aws_ec2_host)
 vpc_id = os.environ['VPC_ID']
 logger.debug('Parsing environment... (vpc_id: %s)', vpc_id)
-aws_container_credentials_relative_uri = os.environ[
-    'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI'
-]
+aws_container_credentials_relative_uri = os.environ['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
 logger.debug(
-    'Parsing environment... (aws_container_credentials_relative_uri: %s)',
-    aws_container_credentials_relative_uri,
+    'Parsing environment... (aws_container_credentials_relative_uri: %s)', aws_container_credentials_relative_uri,
 )
 logger.debug('Parsing environment... (done)')
 
 logger.debug('Finding local IP address...')
 with urllib.request.urlopen('http://169.254.170.2/v2/metadata') as ip_response:
-    ip_address = json.loads(ip_response.read().decode('utf-8'))['Containers'][0][
-        'Networks'
-    ][0]['IPv4Addresses'][0]
+    ip_address = json.loads(ip_response.read().decode('utf-8'))['Containers'][0]['Networks'][0]['IPv4Addresses'][0]
 logger.debug('Finding local IP address... (ip_address: %s)', ip_address)
 logger.debug('Finding local IP address... (done)')
 
 logger.debug('Finding credentials...')
-with urllib.request.urlopen(
-    f'http://169.254.170.2{aws_container_credentials_relative_uri}'
-) as creds_response:
+with urllib.request.urlopen(f'http://169.254.170.2{aws_container_credentials_relative_uri}') as creds_response:
     creds = json.loads(creds_response.read().decode('utf-8'))
     access_key_id = creds['AccessKeyId']
     secret_access_key = creds['SecretAccessKey']
@@ -129,15 +115,10 @@ with urllib.request.urlopen(
 logger.debug('Finding credentials... (done)')
 
 logger.debug('Finding existing DHCP options...')
-describe_vpc_response = ec2_request(
-    {'Action': 'DescribeVpcs', 'Version': '2016-11-15', 'VpcId.1': vpc_id}
-)
-existing_dhcp_options_id = re.search(
-    b'<dhcpOptionsId>([^<]+)</dhcpOptionsId>', describe_vpc_response
-)[1]
+describe_vpc_response = ec2_request({'Action': 'DescribeVpcs', 'Version': '2016-11-15', 'VpcId.1': vpc_id})
+existing_dhcp_options_id = re.search(b'<dhcpOptionsId>([^<]+)</dhcpOptionsId>', describe_vpc_response)[1]
 logger.debug(
-    'Finding existing DHCP options... (existing_dhcp_options_id: %s)',
-    existing_dhcp_options_id,
+    'Finding existing DHCP options... (existing_dhcp_options_id: %s)', existing_dhcp_options_id,
 )
 logger.debug('Finding existing DHCP options... (done)')
 
@@ -150,12 +131,8 @@ create_dhcp_options_response = ec2_request(
         'DhcpConfiguration.1.Value.1': ip_address,
     }
 )
-new_dhcp_options_id = re.search(
-    b'<dhcpOptionsId>([^<]+)</dhcpOptionsId>', create_dhcp_options_response
-)[1]
-logger.debug(
-    'Creating DHCP options set... (new_dhcp_options_id:  %s)', new_dhcp_options_id
-)
+new_dhcp_options_id = re.search(b'<dhcpOptionsId>([^<]+)</dhcpOptionsId>', create_dhcp_options_response)[1]
+logger.debug('Creating DHCP options set... (new_dhcp_options_id:  %s)', new_dhcp_options_id)
 logger.debug('Creating DHCP options set... (done)')
 
 logger.debug('Tagging DHCP options set...')
@@ -183,10 +160,6 @@ logger.debug('Associating DHCP options... (done)')
 
 logger.debug('Deleting existing DHCP options...')
 create_dhcp_options_response = ec2_request(
-    {
-        'Action': 'DeleteDhcpOptions',
-        'Version': '2016-11-15',
-        'DhcpOptionsId': existing_dhcp_options_id.decode('ascii'),
-    }
+    {'Action': 'DeleteDhcpOptions', 'Version': '2016-11-15', 'DhcpOptionsId': existing_dhcp_options_id.decode('ascii'),}
 )
 logger.debug('Deleting existing DHCP options... (done)')

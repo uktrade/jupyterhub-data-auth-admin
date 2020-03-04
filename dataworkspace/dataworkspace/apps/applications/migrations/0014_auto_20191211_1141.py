@@ -10,8 +10,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='applicationtemplate',
-            index=models.Index(
-                fields=['application_type'], name='app_applica_applica_dd47f1_idx'
-            ),
+            index=models.Index(fields=['application_type'], name='app_applica_applica_dd47f1_idx'),
         )
     ]

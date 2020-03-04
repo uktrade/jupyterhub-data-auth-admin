@@ -21,9 +21,7 @@ def get_key(dictionary, field):
 @register.filter
 def add_class(field, class_attr):
     if 'class' in field.field.widget.attrs:
-        field.field.widget.attrs['class'] = '{} {}'.format(
-            field.field.widget.attrs['class'], class_attr
-        )
+        field.field.widget.attrs['class'] = '{} {}'.format(field.field.widget.attrs['class'], class_attr)
     else:
         field.field.widget.attrs['class'] = class_attr
     return field

@@ -18,29 +18,15 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_date', models.DateTimeField(auto_now_add=True)),
                 ('modified_date', models.DateTimeField(auto_now=True)),
-                (
-                    'id',
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False,),),
                 ('db_username', models.CharField(max_length=256)),
                 (
                     'application_instance',
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to='applications.ApplicationInstance',
+                        on_delete=django.db.models.deletion.CASCADE, to='applications.ApplicationInstance',
                     ),
                 ),
-                (
-                    'db',
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.Database'
-                    ),
-                ),
+                ('db', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.Database'),),
             ],
             options={'abstract': False},
         )

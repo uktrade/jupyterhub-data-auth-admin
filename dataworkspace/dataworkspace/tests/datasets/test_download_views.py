@@ -41,18 +41,10 @@ def dataset_db(db):
 def test_master_dataset_fields(client, dataset_db):
     ds = factories.DataSetFactory.create(published=True)
     factories.SourceTableFactory(
-        dataset=ds,
-        name='d1',
-        database=dataset_db,
-        schema='public',
-        table='dataset_test',
+        dataset=ds, name='d1', database=dataset_db, schema='public', table='dataset_test',
     )
     factories.SourceTableFactory(
-        dataset=ds,
-        name='d2',
-        database=dataset_db,
-        schema='public',
-        table='dataset_test2',
+        dataset=ds, name='d2', database=dataset_db, schema='public', table='dataset_test2',
     )
 
     response = client.get(ds.get_absolute_url())
@@ -69,9 +61,7 @@ def test_master_dataset_fields(client, dataset_db):
 
 def test_view_data_cut_fields(client, dataset_db):
     ds = factories.DataSetFactory.create(published=True)
-    factories.SourceViewFactory(
-        dataset=ds, database=dataset_db, schema='public', view='dataset_view'
-    )
+    factories.SourceViewFactory(dataset=ds, database=dataset_db, schema='public', view='dataset_view')
 
     response = client.get(ds.get_absolute_url())
 
@@ -82,9 +72,7 @@ def test_view_data_cut_fields(client, dataset_db):
 def test_query_data_cut_fields(client, dataset_db):
     ds = factories.DataSetFactory.create(published=True)
     factories.CustomDatasetQueryFactory(
-        dataset=ds,
-        database=dataset_db,
-        query="SELECT id customid, name customname FROM dataset_test",
+        dataset=ds, database=dataset_db, query="SELECT id customid, name customname FROM dataset_test",
     )
 
     response = client.get(ds.get_absolute_url())
@@ -146,26 +134,14 @@ class TestDatasetViews:
     def test_reference_dataset_json_download(self, request_client, published):
         linked_rds = factories.ReferenceDatasetFactory.create(published=published)
         linked_field1 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=linked_rds,
-            name='id',
-            data_type=2,
-            is_identifier=True,
-            column_name='extid',
+            reference_dataset=linked_rds, name='id', data_type=2, is_identifier=True, column_name='extid',
         )
         linked_field2 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=linked_rds,
-            name='name',
-            data_type=1,
-            is_display_name=True,
-            column_name='name',
+            reference_dataset=linked_rds, name='name', data_type=1, is_display_name=True, column_name='name',
         )
         rds = factories.ReferenceDatasetFactory.create()
         field1 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds,
-            name='id',
-            data_type=2,
-            is_identifier=True,
-            column_name='extid',
+            reference_dataset=rds, name='id', data_type=2, is_identifier=True, column_name='extid',
         )
         field2 = factories.ReferenceDatasetFieldFactory.create(
             reference_dataset=rds, name='name', data_type=1, column_name='name'
@@ -178,18 +154,10 @@ class TestDatasetViews:
             column_name='linked',
         )
         factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds,
-            name='auto uuid',
-            column_name='auto_uuid',
-            data_type=9,
-            sort_order=4,
+            reference_dataset=rds, name='auto uuid', column_name='auto_uuid', data_type=9, sort_order=4,
         )
         factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds,
-            name='auto id',
-            column_name='auto_id',
-            data_type=10,
-            sort_order=5,
+            reference_dataset=rds, name='auto id', column_name='auto_id', data_type=10, sort_order=5,
         )
         link_record = linked_rds.save_record(
             None,
@@ -221,10 +189,7 @@ class TestDatasetViews:
         log_count = EventLog.objects.count()
         download_count = rds.number_of_downloads
         response = request_client.get(
-            reverse(
-                'datasets:reference_dataset_download',
-                kwargs={'dataset_uuid': rds.uuid, 'format': 'json'},
-            )
+            reverse('datasets:reference_dataset_download', kwargs={'dataset_uuid': rds.uuid, 'format': 'json'},)
         )
         assert response.status_code == 200
         assert response.json() == [
@@ -246,14 +211,8 @@ class TestDatasetViews:
             },
         ]
         assert EventLog.objects.count() == log_count + 1
-        assert (
-            EventLog.objects.latest().event_type
-            == EventLog.TYPE_REFERENCE_DATASET_DOWNLOAD
-        )
-        assert (
-            ReferenceDataset.objects.get(pk=rds.id).number_of_downloads
-            == download_count + 1
-        )
+        assert EventLog.objects.latest().event_type == EventLog.TYPE_REFERENCE_DATASET_DOWNLOAD
+        assert ReferenceDataset.objects.get(pk=rds.id).number_of_downloads == download_count + 1
 
     @pytest.mark.parametrize(
         'request_client,published',
@@ -271,35 +230,19 @@ class TestDatasetViews:
         )
         rds = factories.ReferenceDatasetFactory.create()
         field1 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds,
-            name='id',
-            data_type=2,
-            is_identifier=True,
-            sort_order=1,
+            reference_dataset=rds, name='id', data_type=2, is_identifier=True, sort_order=1,
         )
         field2 = factories.ReferenceDatasetFieldFactory.create(
             reference_dataset=rds, name='name', data_type=1, sort_order=2
         )
         field3 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds,
-            name='linked',
-            data_type=8,
-            linked_reference_dataset=linked_rds,
-            sort_order=3,
+            reference_dataset=rds, name='linked', data_type=8, linked_reference_dataset=linked_rds, sort_order=3,
         )
         factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds,
-            name='auto uuid',
-            column_name='auto_uuid',
-            data_type=9,
-            sort_order=4,
+            reference_dataset=rds, name='auto uuid', column_name='auto_uuid', data_type=9, sort_order=4,
         )
         factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds,
-            name='auto id',
-            column_name='auto_id',
-            data_type=10,
-            sort_order=5,
+            reference_dataset=rds, name='auto id', column_name='auto_id', data_type=10, sort_order=5,
         )
         link_record = linked_rds.save_record(
             None,
@@ -330,47 +273,29 @@ class TestDatasetViews:
         log_count = EventLog.objects.count()
         download_count = rds.number_of_downloads
         response = request_client.get(
-            reverse(
-                'datasets:reference_dataset_download',
-                kwargs={'dataset_uuid': rds.uuid, 'format': 'csv'},
-            )
+            reverse('datasets:reference_dataset_download', kwargs={'dataset_uuid': rds.uuid, 'format': 'csv'},)
         )
         assert response.status_code == 200
         assert response.content == (
             b'"id","name","linked: id","linked: name","auto uuid","auto id"\r\n'
             b'1,"Test record",1,"Linked Display Name",%s,1\r\n'
-            b'2,"\xc3\x81nd again","","",%s,2\r\n'
-            % (str(rec1.auto_uuid).encode(), str(rec2.auto_uuid).encode())
+            b'2,"\xc3\x81nd again","","",%s,2\r\n' % (str(rec1.auto_uuid).encode(), str(rec2.auto_uuid).encode())
         )
         assert EventLog.objects.count() == log_count + 1
-        assert (
-            EventLog.objects.latest().event_type
-            == EventLog.TYPE_REFERENCE_DATASET_DOWNLOAD
-        )
-        assert (
-            ReferenceDataset.objects.get(pk=rds.id).number_of_downloads
-            == download_count + 1
-        )
+        assert EventLog.objects.latest().event_type == EventLog.TYPE_REFERENCE_DATASET_DOWNLOAD
+        assert ReferenceDataset.objects.get(pk=rds.id).number_of_downloads == download_count + 1
 
     def test_reference_dataset_unknown_download(self, client):
         rds = factories.ReferenceDatasetFactory.create(table_name='test_csv')
-        factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds, is_identifier=True
-        )
+        factories.ReferenceDatasetFieldFactory.create(reference_dataset=rds, is_identifier=True)
         log_count = EventLog.objects.count()
         download_count = rds.number_of_downloads
         response = client.get(
-            reverse(
-                'datasets:reference_dataset_download',
-                kwargs={'dataset_uuid': rds.uuid, 'format': 'madeup'},
-            )
+            reverse('datasets:reference_dataset_download', kwargs={'dataset_uuid': rds.uuid, 'format': 'madeup'},)
         )
         assert response.status_code == 404
         assert EventLog.objects.count() == log_count
-        assert (
-            ReferenceDataset.objects.get(pk=rds.id).number_of_downloads
-            == download_count
-        )
+        assert ReferenceDataset.objects.get(pk=rds.id).number_of_downloads == download_count
 
     @override_settings(REFERENCE_DATASET_PREVIEW_NUM_OF_ROWS=1)
     @pytest.mark.django_db
@@ -380,12 +305,8 @@ class TestDatasetViews:
         field1 = factories.ReferenceDatasetFieldFactory.create(
             reference_dataset=rds, name='id', data_type=2, is_identifier=True
         )
-        field2 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds, name='name', data_type=1
-        )
-        field3 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=rds, name='desc', data_type=1
-        )
+        field2 = factories.ReferenceDatasetFieldFactory.create(reference_dataset=rds, name='name', data_type=1)
+        field3 = factories.ReferenceDatasetFieldFactory.create(reference_dataset=rds, name='desc', data_type=1)
         rds.save_record(
             None,
             {
@@ -419,9 +340,7 @@ class TestDatasetViews:
 
 class TestSourceLinkDownloadView:
     def test_forbidden_dataset(self, client):
-        dataset = factories.DataSetFactory.create(
-            published=True, user_access_type='REQUIRES_AUTHORIZATION'
-        )
+        dataset = factories.DataSetFactory.create(published=True, user_access_type='REQUIRES_AUTHORIZATION')
         link = factories.SourceLinkFactory(
             id='158776ec-5c40-4c58-ba7c-a3425905ec45',
             dataset=dataset,
@@ -432,8 +351,7 @@ class TestSourceLinkDownloadView:
         download_count = dataset.number_of_downloads
         response = client.get(
             reverse(
-                'datasets:dataset_source_link_download',
-                kwargs={'dataset_uuid': dataset.id, 'source_link_id': link.id},
+                'datasets:dataset_source_link_download', kwargs={'dataset_uuid': dataset.id, 'source_link_id': link.id},
             )
         )
         assert response.status_code == 403
@@ -447,32 +365,22 @@ class TestSourceLinkDownloadView:
     )
     @pytest.mark.django_db
     def test_download_external_file(self, request_client, published):
-        dataset = factories.DataSetFactory.create(
-            published=published, user_access_type='REQUIRES_AUTHENTICATION'
-        )
+        dataset = factories.DataSetFactory.create(published=published, user_access_type='REQUIRES_AUTHENTICATION')
         link = factories.SourceLinkFactory(
-            dataset=dataset,
-            link_type=SourceLink.TYPE_EXTERNAL,
-            url='http://example.com',
+            dataset=dataset, link_type=SourceLink.TYPE_EXTERNAL, url='http://example.com',
         )
         log_count = EventLog.objects.count()
         download_count = dataset.number_of_downloads
         response = request_client.get(
             reverse(
-                'datasets:dataset_source_link_download',
-                kwargs={'dataset_uuid': dataset.id, 'source_link_id': link.id},
+                'datasets:dataset_source_link_download', kwargs={'dataset_uuid': dataset.id, 'source_link_id': link.id},
             ),
             follow=False,
         )
         assert response.status_code == 302
         assert EventLog.objects.count() == log_count + 1
-        assert (
-            EventLog.objects.latest().event_type
-            == EventLog.TYPE_DATASET_SOURCE_LINK_DOWNLOAD
-        )
-        assert (
-            DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
-        )
+        assert EventLog.objects.latest().event_type == EventLog.TYPE_DATASET_SOURCE_LINK_DOWNLOAD
+        assert DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
 
     @pytest.mark.parametrize(
         'request_client,published',
@@ -482,9 +390,7 @@ class TestSourceLinkDownloadView:
     @pytest.mark.django_db
     @mock.patch('dataworkspace.apps.datasets.views.boto3.client')
     def test_download_local_file(self, mock_client, request_client, published):
-        dataset = factories.DataSetFactory.create(
-            published=published, user_access_type='REQUIRES_AUTHENTICATION'
-        )
+        dataset = factories.DataSetFactory.create(published=published, user_access_type='REQUIRES_AUTHENTICATION')
         link = factories.SourceLinkFactory(
             id='158776ec-5c40-4c58-ba7c-a3425905ec45',
             dataset=dataset,
@@ -495,29 +401,19 @@ class TestSourceLinkDownloadView:
         download_count = dataset.number_of_downloads
         mock_client().get_object.return_value = {
             'ContentType': 'text/plain',
-            'Body': StreamingBody(
-                io.BytesIO(b'This is a test file'), len(b'This is a test file')
-            ),
+            'Body': StreamingBody(io.BytesIO(b'This is a test file'), len(b'This is a test file')),
         }
         response = request_client.get(
             reverse(
-                'datasets:dataset_source_link_download',
-                kwargs={'dataset_uuid': dataset.id, 'source_link_id': link.id},
+                'datasets:dataset_source_link_download', kwargs={'dataset_uuid': dataset.id, 'source_link_id': link.id},
             )
         )
         assert response.status_code == 200
         assert list(response.streaming_content)[0] == b'This is a test file'
-        mock_client().get_object.assert_called_with(
-            Bucket=settings.AWS_UPLOADS_BUCKET, Key=link.url
-        )
+        mock_client().get_object.assert_called_with(Bucket=settings.AWS_UPLOADS_BUCKET, Key=link.url)
         assert EventLog.objects.count() == log_count + 1
-        assert (
-            EventLog.objects.latest().event_type
-            == EventLog.TYPE_DATASET_SOURCE_LINK_DOWNLOAD
-        )
-        assert (
-            DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
-        )
+        assert EventLog.objects.latest().event_type == EventLog.TYPE_DATASET_SOURCE_LINK_DOWNLOAD
+        assert DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
 
 
 class TestSourceViewDownloadView:
@@ -534,8 +430,7 @@ class TestSourceViewDownloadView:
     def test_missing_view(self, client):
         dataset = factories.DataSetFactory(user_access_type='REQUIRES_AUTHENTICATION')
         source_view = factories.SourceViewFactory(
-            dataset=dataset,
-            database=factories.DatabaseFactory(memorable_name='my_database'),
+            dataset=dataset, database=factories.DatabaseFactory(memorable_name='my_database'),
         )
         download_count = dataset.number_of_downloads
         response = client.get(source_view.get_absolute_url())
@@ -561,9 +456,7 @@ class TestSourceViewDownloadView:
                 '''
             )
 
-        dataset = factories.DataSetFactory(
-            user_access_type='REQUIRES_AUTHENTICATION', published=published
-        )
+        dataset = factories.DataSetFactory(user_access_type='REQUIRES_AUTHENTICATION', published=published)
         source_view = factories.SourceViewFactory(
             dataset=dataset,
             database=factories.DatabaseFactory(memorable_name='my_database'),
@@ -579,13 +472,8 @@ class TestSourceViewDownloadView:
             == b'"field2","field1"\r\n1,"record1"\r\n2,"record2"\r\n"Number of rows: 2"\r\n'
         )
         assert EventLog.objects.count() == log_count + 1
-        assert (
-            EventLog.objects.latest().event_type
-            == EventLog.TYPE_DATASET_SOURCE_VIEW_DOWNLOAD
-        )
-        assert (
-            DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
-        )
+        assert EventLog.objects.latest().event_type == EventLog.TYPE_DATASET_SOURCE_VIEW_DOWNLOAD
+        assert DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
 
     @pytest.mark.parametrize(
         'request_client,published',
@@ -607,9 +495,7 @@ class TestSourceViewDownloadView:
                 SELECT * FROM materialized_test_table;
                 '''
             )
-        dataset = factories.DataSetFactory(
-            user_access_type='REQUIRES_AUTHENTICATION', published=published
-        )
+        dataset = factories.DataSetFactory(user_access_type='REQUIRES_AUTHENTICATION', published=published)
         source_view = factories.SourceViewFactory(
             dataset=dataset,
             database=factories.DatabaseFactory(memorable_name='my_database'),
@@ -625,13 +511,8 @@ class TestSourceViewDownloadView:
             == b'"field2","field1"\r\n1,"record1"\r\n2,"record2"\r\n"Number of rows: 2"\r\n'
         )
         assert EventLog.objects.count() == log_count + 1
-        assert (
-            EventLog.objects.latest().event_type
-            == EventLog.TYPE_DATASET_SOURCE_VIEW_DOWNLOAD
-        )
-        assert (
-            DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
-        )
+        assert EventLog.objects.latest().event_type == EventLog.TYPE_DATASET_SOURCE_VIEW_DOWNLOAD
+        assert DataSet.objects.get(pk=dataset.id).number_of_downloads == download_count + 1
 
 
 class TestCustomQueryDownloadView:
@@ -656,9 +537,7 @@ class TestCustomQueryDownloadView:
                 INSERT INTO custom_query_test VALUES(3, 'the last record', NULL);
                 '''
             )
-        dataset = factories.DataSetFactory(
-            user_access_type='REQUIRES_AUTHENTICATION', published=published
-        )
+        dataset = factories.DataSetFactory(user_access_type='REQUIRES_AUTHENTICATION', published=published)
         return factories.CustomDatasetQueryFactory(
             dataset=dataset, database=self._get_database(), query=sql, reviewed=reviewed
         )
@@ -666,9 +545,7 @@ class TestCustomQueryDownloadView:
     def test_forbidden_dataset(self, client):
         dataset = factories.DataSetFactory(user_access_type='REQUIRES_AUTHORIZATION')
         query = factories.CustomDatasetQueryFactory(
-            dataset=dataset,
-            database=self._get_database(),
-            query='SELECT * FROM a_table',
+            dataset=dataset, database=self._get_database(), query='SELECT * FROM a_table',
         )
         log_count = EventLog.objects.count()
         download_count = dataset.number_of_downloads
@@ -707,15 +584,11 @@ class TestCustomQueryDownloadView:
             list(client.get(query.get_absolute_url()).streaming_content)
 
         with psycopg2.connect(self._get_dsn()) as conn, conn.cursor() as cursor:
-            cursor.execute(
-                'SELECT COUNT(*) FROM custom_query_test WHERE name=\'updated\''
-            )
+            cursor.execute('SELECT COUNT(*) FROM custom_query_test WHERE name=\'updated\'')
             assert cursor.fetchone()[0] == 0
 
         # Test insert record
-        query = self._create_query(
-            'INSERT INTO custom_query_test (id, name) VALUES(4, \'added\')'
-        )
+        query = self._create_query('INSERT INTO custom_query_test (id, name) VALUES(4, \'added\')')
         with pytest.raises(Exception):
             list(client.get(query.get_absolute_url()).streaming_content)
 
@@ -730,26 +603,17 @@ class TestCustomQueryDownloadView:
     )
     @pytest.mark.django_db
     def test_valid_sql(self, request_client, published):
-        query = self._create_query(
-            'SELECT * FROM custom_query_test WHERE id IN (1, 3)', published=published
-        )
+        query = self._create_query('SELECT * FROM custom_query_test WHERE id IN (1, 3)', published=published)
         log_count = EventLog.objects.count()
         download_count = query.dataset.number_of_downloads
         response = request_client.get(query.get_absolute_url())
         assert response.status_code == 200
         assert b''.join(response.streaming_content) == (
-            b'"id","name","date"\r\n1,"the first record",""\r\n'
-            b'3,"the last record",""\r\n"Number of rows: 2"\r\n'
+            b'"id","name","date"\r\n1,"the first record",""\r\n' b'3,"the last record",""\r\n"Number of rows: 2"\r\n'
         )
         assert EventLog.objects.count() == log_count + 1
-        assert (
-            EventLog.objects.latest().event_type
-            == EventLog.TYPE_DATASET_CUSTOM_QUERY_DOWNLOAD
-        )
-        assert (
-            DataSet.objects.get(pk=query.dataset.id).number_of_downloads
-            == download_count + 1
-        )
+        assert EventLog.objects.latest().event_type == EventLog.TYPE_DATASET_CUSTOM_QUERY_DOWNLOAD
+        assert DataSet.objects.get(pk=query.dataset.id).number_of_downloads == download_count + 1
 
     @pytest.mark.parametrize(
         "request_client, reviewed, status",
@@ -762,12 +626,8 @@ class TestCustomQueryDownloadView:
         indirect=["request_client"],
     )
     @pytest.mark.django_db
-    def test_only_superuser_can_download_unreviewed_query(
-        self, request_client, reviewed, status
-    ):
-        query = self._create_query(
-            'SELECT * FROM custom_query_test', published=False, reviewed=reviewed
-        )
+    def test_only_superuser_can_download_unreviewed_query(self, request_client, reviewed, status):
+        query = self._create_query('SELECT * FROM custom_query_test', published=False, reviewed=reviewed)
 
         response = request_client.get(query.get_absolute_url())
         assert response.status_code == status

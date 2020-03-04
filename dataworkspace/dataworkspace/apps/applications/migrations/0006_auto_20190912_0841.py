@@ -9,13 +9,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='applicationinstance',
-            name='cpu',
-            field=models.CharField(max_length=16, null=True),
+            model_name='applicationinstance', name='cpu', field=models.CharField(max_length=16, null=True),
         ),
         migrations.AddField(
-            model_name='applicationinstance',
-            name='memory',
-            field=models.CharField(max_length=16, null=True),
+            model_name='applicationinstance', name='memory', field=models.CharField(max_length=16, null=True),
         ),
     ]

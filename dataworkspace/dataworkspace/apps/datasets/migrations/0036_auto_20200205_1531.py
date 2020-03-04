@@ -13,18 +13,14 @@ class Migration(migrations.Migration):
             model_name='dataset',
             name='grouping',
             field=models.ForeignKey(
-                null=True,
-                on_delete=django.db.models.deletion.CASCADE,
-                to='datasets.DataGrouping',
+                null=True, on_delete=django.db.models.deletion.CASCADE, to='datasets.DataGrouping',
             ),
         ),
         migrations.AlterField(
             model_name='referencedataset',
             name='group',
             field=models.ForeignKey(
-                null=True,
-                on_delete=django.db.models.deletion.CASCADE,
-                to='datasets.DataGrouping',
+                null=True, on_delete=django.db.models.deletion.CASCADE, to='datasets.DataGrouping',
             ),
         ),
     ]

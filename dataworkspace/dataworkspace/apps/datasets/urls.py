@@ -5,11 +5,7 @@ from dataworkspace.apps.datasets import views
 
 urlpatterns = [
     path('', login_required(views.find_datasets), name='find_datasets'),
-    path(
-        '<str:dataset_uuid>',
-        login_required(views.DatasetDetailView.as_view()),
-        name='dataset_detail',
-    ),
+    path('<str:dataset_uuid>', login_required(views.DatasetDetailView.as_view()), name='dataset_detail',),
     path(
         '<str:dataset_uuid>/link/<str:source_link_id>/download',
         login_required(views.SourceLinkDownloadView.as_view()),
@@ -40,11 +36,7 @@ urlpatterns = [
         login_required(views.eligibility_criteria_not_met_view),
         name='eligibility_criteria_not_met',
     ),
-    path(
-        '<str:dataset_uuid>/request-access',
-        login_required(views.request_access_view),
-        name='request_access',
-    ),
+    path('<str:dataset_uuid>/request-access', login_required(views.request_access_view), name='request_access',),
     path(
         '<str:dataset_uuid>/request-access-success',
         login_required(views.request_access_success_view),

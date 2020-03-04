@@ -16,10 +16,7 @@ def create_subject_matter_expert_group(app, schema_editor):
     Permission = app.get_model('auth', 'Permission')
     sme = Group.objects.get_or_create(name="Subject Matter Experts")[0]
     perms = Permission.objects.filter(
-        codename__in=[
-            'manage_unpublished_master_datasets',
-            'manage_unpublished_datacut_datasets',
-        ]
+        codename__in=['manage_unpublished_master_datasets', 'manage_unpublished_datacut_datasets',]
     )
     sme.permissions.add(*perms)
     sme.save()

@@ -9,8 +9,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='referencedataset',
-            name='is_joint_dataset',
-            field=models.BooleanField(default=False),
+            model_name='referencedataset', name='is_joint_dataset', field=models.BooleanField(default=False),
         )
     ]

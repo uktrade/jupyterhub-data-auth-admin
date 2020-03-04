@@ -107,22 +107,15 @@ async def async_main():
     spawning_http_timeout = aiohttp.ClientTimeout(sock_read=5, sock_connect=2)
 
     def get_random_context_logger():
-        return ContextAdapter(
-            logger, {'context': ''.join(random.choices(CONTEXT_ALPHABET, k=8))}
-        )
+        return ContextAdapter(logger, {'context': ''.join(random.choices(CONTEXT_ALPHABET, k=8))})
 
     def without_transfer_encoding(request_or_response):
         return tuple(
-            (key, value)
-            for key, value in request_or_response.headers.items()
-            if key.lower() != 'transfer-encoding'
+            (key, value) for key, value in request_or_response.headers.items() if key.lower() != 'transfer-encoding'
         )
 
     def admin_headers(downstream_request):
-        return (
-            without_transfer_encoding(downstream_request)
-            + downstream_request['sso_profile_headers']
-        )
+        return without_transfer_encoding(downstream_request) + downstream_request['sso_profile_headers']
 
     def application_headers(downstream_request):
         return without_transfer_encoding(downstream_request) + (
@@ -142,10 +135,7 @@ async def async_main():
         return request.url.host.endswith(f'.{root_domain_no_port}')
 
     def is_requesting_credentials(request):
-        return (
-            request.url.host == root_domain_no_port
-            and request.url.path == '/api/v1/aws_credentials'
-        )
+        return request.url.host == root_domain_no_port and request.url.path == '/api/v1/aws_credentials'
 
     def is_requesting_files(request):
         return request.url.host == root_domain_no_port and request.url.path == '/files'
@@ -161,11 +151,7 @@ async def async_main():
         return is_dataset_requested(request)
 
     def is_healthcheck_requested(request):
-        return (
-            request.url.path == '/healthcheck'
-            and request.method == 'GET'
-            and not is_app_requested(request)
-        )
+        return request.url.path == '/healthcheck' and request.method == 'GET' and not is_app_requested(request)
 
     def is_table_requested(request):
         return (
@@ -183,11 +169,7 @@ async def async_main():
         )
 
     def get_peer_ip(request):
-        peer_ip = (
-            request.headers['x-forwarded-for']
-            .split(',')[-x_forwarded_for_trusted_hops]
-            .strip()
-        )
+        peer_ip = request.headers['x-forwarded-for'].split(',')[-x_forwarded_for_trusted_hops].strip()
 
         is_private = True
         try:
@@ -213,29 +195,20 @@ async def async_main():
 
         try:
             return (
-                await handle_application(
-                    is_websocket, downstream_request, method, path, query
-                )
+                await handle_application(is_websocket, downstream_request, method, path, query)
                 if app_requested
                 else await handle_admin(downstream_request, method, path, query)
             )
 
         except Exception as exception:
             logger.exception(
-                'Exception during %s %s %s',
-                downstream_request.method,
-                downstream_request.url,
-                type(exception),
+                'Exception during %s %s %s', downstream_request.method, downstream_request.url, type(exception),
             )
 
             if is_websocket:
                 raise
 
-            params = (
-                {'message': exception.args[0]}
-                if isinstance(exception, UserException)
-                else {}
-            )
+            params = {'message': exception.args[0]} if isinstance(exception, UserException) else {}
 
             status = exception.args[1] if isinstance(exception, UserException) else 500
 
@@ -249,9 +222,7 @@ async def async_main():
             )
 
     async def handle_application(is_websocket, downstream_request, method, path, query):
-        public_host, _, _ = downstream_request.url.host.partition(
-            f'.{root_domain_no_port}'
-        )
+        public_host, _, _ = downstream_request.url.host.partition(f'.{root_domain_no_port}')
         public_host, _, port_override_str = public_host.partition('--')
         try:
             port_override = int(port_override_str)
@@ -270,33 +241,18 @@ async def async_main():
             raise UserException('Unable to start the application', response.status)
 
         if host_exists and application['state'] not in ['SPAWNING', 'RUNNING']:
-            if (
-                'x-data-workspace-no-modify-application-instance'
-                not in downstream_request.headers
-            ):
+            if 'x-data-workspace-no-modify-application-instance' not in downstream_request.headers:
                 async with client_session.request(
-                    'DELETE',
-                    host_api_url,
-                    headers=CIMultiDict(admin_headers(downstream_request)),
+                    'DELETE', host_api_url, headers=CIMultiDict(admin_headers(downstream_request)),
                 ) as delete_response:
                     await delete_response.read()
             raise UserException('Application ' + application['state'], 500)
 
         if not host_exists:
-            if (
-                'x-data-workspace-no-modify-application-instance'
-                not in downstream_request.headers
-            ):
-                params = {
-                    key: value
-                    for key, value in downstream_request.query.items()
-                    if key == '__memory_cpu'
-                }
+            if 'x-data-workspace-no-modify-application-instance' not in downstream_request.headers:
+                params = {key: value for key, value in downstream_request.query.items() if key == '__memory_cpu'}
                 async with client_session.request(
-                    'PUT',
-                    host_api_url,
-                    params=params,
-                    headers=CIMultiDict(admin_headers(downstream_request)),
+                    'PUT', host_api_url, params=params, headers=CIMultiDict(admin_headers(downstream_request)),
                 ) as response:
                     host_exists = response.status == 200
                     application = await response.json()
@@ -310,8 +266,7 @@ async def async_main():
 
         if application['state'] not in ['SPAWNING', 'RUNNING']:
             raise UserException(
-                'Attempted to start the application, but it ' + application['state'],
-                500,
+                'Attempted to start the application, but it ' + application['state'], 500,
             )
 
         if not application['proxy_url']:
@@ -326,9 +281,7 @@ async def async_main():
             )
 
         return (
-            await handle_application_websocket(
-                downstream_request, application['proxy_url'], path, query, port_override
-            )
+            await handle_application_websocket(downstream_request, application['proxy_url'], path, query, port_override)
             if is_websocket
             else await handle_application_http_spawning(
                 downstream_request,
@@ -348,16 +301,10 @@ async def async_main():
             )
         )
 
-    async def handle_application_websocket(
-        downstream_request, proxy_url, path, query, port_override
-    ):
-        upstream_url = application_upstream(proxy_url, path, port_override).with_query(
-            query
-        )
+    async def handle_application_websocket(downstream_request, proxy_url, path, query, port_override):
+        upstream_url = application_upstream(proxy_url, path, port_override).with_query(query)
         return await handle_websocket(
-            downstream_request,
-            CIMultiDict(application_headers(downstream_request)),
-            upstream_url,
+            downstream_request, CIMultiDict(application_headers(downstream_request)), upstream_url,
         )
 
     def application_upstream(proxy_url, path, port_override):
@@ -415,9 +362,7 @@ async def async_main():
 
             return response
 
-    async def handle_application_http_running(
-        downstream_request, method, upstream_url, query, _
-    ):
+    async def handle_application_http_running(downstream_request, method, upstream_url, query, _):
         # For the time being, we don't attempt to delete if an application has failed
         # Since initial attempts were too sensistive, and would delete the application
         # when it was still running
@@ -495,9 +440,7 @@ async def async_main():
         try:
             upstream_ws = await upstream_connection
             _, _, _, with_session_cookie = downstream_request[SESSION_KEY]
-            downstream_ws = await with_session_cookie(
-                web.WebSocketResponse(protocols=protocols)
-            )
+            downstream_ws = await with_session_cookie(web.WebSocketResponse(protocols=protocols))
 
             await downstream_ws.prepare(downstream_request)
             downstream_connection.set_result(downstream_ws)
@@ -548,9 +491,7 @@ async def async_main():
             downstream_response = await with_session_cookie(
                 web.StreamResponse(
                     status=upstream_response.status,
-                    headers=CIMultiDict(
-                        without_transfer_encoding(upstream_response) + response_headers
-                    ),
+                    headers=CIMultiDict(without_transfer_encoding(upstream_response) + response_headers),
                 )
             )
             await downstream_response.prepare(downstream_request)
@@ -571,18 +512,13 @@ async def async_main():
                 *(
                     (request.remote, request.method, request.path_qs)
                     + request.version
-                    + (
-                        request.headers.get('User-Agent', '-'),
-                        request.headers.get('X-Forwarded-For', '-'),
-                    )
+                    + (request.headers.get('User-Agent', '-'), request.headers.get('X-Forwarded-For', '-'),)
                 ),
             )
 
             response = await handler(request)
 
-            request_logger.info(
-                'Responding (%s) (%s)', response.status, response.content_length
-            )
+            request_logger.info('Responding (%s) (%s)', response.status, response.content_length)
 
             return response
 
@@ -601,40 +537,28 @@ async def async_main():
                 return await handler(request)
 
             if 'Authorization' not in request.headers:
-                request['logger'].info(
-                    'SSO-token unathenticated: missing authorization header'
-                )
+                request['logger'].info('SSO-token unathenticated: missing authorization header')
                 return await handle_admin(request, 'GET', '/error_403', {})
 
             async with client_session.get(
-                f'{sso_base_url}{me_path}',
-                headers={'Authorization': request.headers['Authorization']},
+                f'{sso_base_url}{me_path}', headers={'Authorization': request.headers['Authorization']},
             ) as me_response:
-                me_profile = (
-                    await me_response.json() if me_response.status == 200 else None
-                )
+                me_profile = await me_response.json() if me_response.status == 200 else None
 
             if not me_profile:
-                request['logger'].info(
-                    'SSO-token unathenticated: bad authorization header'
-                )
+                request['logger'].info('SSO-token unathenticated: bad authorization header')
                 return await handle_admin(request, 'GET', '/error_403', {})
 
             request['sso_profile_headers'] = (
                 ('sso-profile-email', me_profile['email']),
-                (
-                    'sso-profile-related-emails',
-                    ','.join(me_profile.get('related_emails', [])),
-                ),
+                ('sso-profile-related-emails', ','.join(me_profile.get('related_emails', [])),),
                 ('sso-profile-user-id', me_profile['user_id']),
                 ('sso-profile-first-name', me_profile['first_name']),
                 ('sso-profile-last-name', me_profile['last_name']),
             )
 
             request['logger'].info(
-                'SSO-token authenticated: %s %s',
-                me_profile['email'],
-                me_profile['user_id'],
+                'SSO-token authenticated: %s %s', me_profile['email'], me_profile['user_id'],
             )
 
             return await handler(request)
@@ -655,13 +579,9 @@ async def async_main():
 
         async def get_redirect_uri_authenticate(set_session_value, redirect_uri_final):
             scheme = URL(redirect_uri_final).scheme
-            sso_state = await set_redirect_uri_final(
-                set_session_value, redirect_uri_final
-            )
+            sso_state = await set_redirect_uri_final(set_session_value, redirect_uri_final)
 
-            redirect_uri_callback = urllib.parse.quote(
-                get_redirect_uri_callback(scheme), safe=''
-            )
+            redirect_uri_callback = urllib.parse.quote(get_redirect_uri_callback(scheme), safe='')
             return (
                 f'{sso_base_url}{auth_path}?'
                 f'scope={scope}&state={sso_state}&'
@@ -677,42 +597,25 @@ async def async_main():
             return str(request.url.with_scheme(request_scheme(request)))
 
         def get_redirect_uri_callback(scheme):
-            return str(
-                URL.build(
-                    host=root_domain_no_port,
-                    port=root_port,
-                    scheme=scheme,
-                    path=redirect_from_sso_path,
-                )
-            )
+            return str(URL.build(host=root_domain_no_port, port=root_port, scheme=scheme, path=redirect_from_sso_path,))
 
         async def set_redirect_uri_final(set_session_value, redirect_uri_final):
             session_key = secrets.token_hex(32)
-            sso_state = urllib.parse.quote(
-                f'{session_key}_{redirect_uri_final}', safe=''
-            )
+            sso_state = urllib.parse.quote(f'{session_key}_{redirect_uri_final}', safe='')
 
             await set_session_value(session_key, redirect_uri_final)
 
             return sso_state
 
         async def get_redirect_uri_final(get_session_value, sso_state):
-            session_key, _, state_redirect_url = urllib.parse.unquote(
-                sso_state
-            ).partition('_')
+            session_key, _, state_redirect_url = urllib.parse.unquote(sso_state).partition('_')
             return state_redirect_url, await get_session_value(session_key)
 
-        async def redirection_to_sso(
-            with_new_session_cookie, set_session_value, redirect_uri_final
-        ):
+        async def redirection_to_sso(with_new_session_cookie, set_session_value, redirect_uri_final):
             return await with_new_session_cookie(
                 web.Response(
                     status=302,
-                    headers={
-                        'Location': await get_redirect_uri_authenticate(
-                            set_session_value, redirect_uri_final
-                        )
-                    },
+                    headers={'Location': await get_redirect_uri_authenticate(set_session_value, redirect_uri_final)},
                 )
             )
 
@@ -724,23 +627,18 @@ async def async_main():
                 request.setdefault('sso_profile_headers', ())
                 return await handler(request)
 
-            get_session_value, set_session_value, with_new_session_cookie, _ = request[
-                SESSION_KEY
-            ]
+            get_session_value, set_session_value, with_new_session_cookie, _ = request[SESSION_KEY]
 
             token = await get_session_value(session_token_key)
             if request.path != redirect_from_sso_path and token is None:
-                return await redirection_to_sso(
-                    with_new_session_cookie, set_session_value, request_url(request)
-                )
+                return await redirection_to_sso(with_new_session_cookie, set_session_value, request_url(request))
 
             if request.path == redirect_from_sso_path:
                 code = request.query['code']
                 sso_state = request.query['state']
-                (
-                    redirect_uri_final_from_url,
-                    redirect_uri_final_from_session,
-                ) = await get_redirect_uri_final(get_session_value, sso_state)
+                (redirect_uri_final_from_url, redirect_uri_final_from_session,) = await get_redirect_uri_final(
+                    get_session_value, sso_state
+                )
 
                 if redirect_uri_final_from_url != redirect_uri_final_from_session:
                     # We might have been overtaken by a parallel request initiating another auth
@@ -748,9 +646,7 @@ async def async_main():
                     # URL from the session, we can't be sure that this is the same client that
                     # initiated this flow. However, we can redirect back to SSO
                     return await redirection_to_sso(
-                        with_new_session_cookie,
-                        set_session_value,
-                        redirect_uri_final_from_url,
+                        with_new_session_cookie, set_session_value, redirect_uri_final_from_url,
                     )
 
                 async with client_session.post(
@@ -760,26 +656,17 @@ async def async_main():
                         'code': code,
                         'client_id': sso_client_id,
                         'client_secret': sso_client_secret,
-                        'redirect_uri': get_redirect_uri_callback(
-                            request_scheme(request)
-                        ),
+                        'redirect_uri': get_redirect_uri_callback(request_scheme(request)),
                     },
                 ) as sso_response:
                     sso_response_json = await sso_response.json()
-                await set_session_value(
-                    session_token_key, sso_response_json['access_token']
-                )
+                await set_session_value(session_token_key, sso_response_json['access_token'])
                 return await with_new_session_cookie(
-                    web.Response(
-                        status=302,
-                        headers={'Location': redirect_uri_final_from_session},
-                    )
+                    web.Response(status=302, headers={'Location': redirect_uri_final_from_session},)
                 )
 
             # Get profile from Redis cache to avoid calling SSO on every request
-            redis_profile_key = f'{PROFILE_CACHE_PREFIX}___{session_token_key}___{token}'.encode(
-                'ascii'
-            )
+            redis_profile_key = f'{PROFILE_CACHE_PREFIX}___{session_token_key}___{token}'.encode('ascii')
             with await redis_pool as conn:
                 me_profile_raw = await conn.execute('GET', redis_profile_key)
             me_profile = json.loads(me_profile_raw) if me_profile_raw else None
@@ -787,19 +674,14 @@ async def async_main():
             async def handler_with_sso_headers():
                 request['sso_profile_headers'] = (
                     ('sso-profile-email', me_profile['email']),
-                    (
-                        'sso-profile-related-emails',
-                        ','.join(me_profile.get('related_emails', [])),
-                    ),
+                    ('sso-profile-related-emails', ','.join(me_profile.get('related_emails', [])),),
                     ('sso-profile-user-id', me_profile['user_id']),
                     ('sso-profile-first-name', me_profile['first_name']),
                     ('sso-profile-last-name', me_profile['last_name']),
                 )
 
                 request['logger'].info(
-                    'SSO-authenticated: %s %s',
-                    me_profile['email'],
-                    me_profile['user_id'],
+                    'SSO-authenticated: %s %s', me_profile['email'], me_profile['user_id'],
                 )
 
                 return await handler(request)
@@ -810,14 +692,10 @@ async def async_main():
             async with client_session.get(
                 f'{sso_base_url}{me_path}', headers={'Authorization': f'Bearer {token}'}
             ) as me_response:
-                me_profile_full = (
-                    await me_response.json() if me_response.status == 200 else None
-                )
+                me_profile_full = await me_response.json() if me_response.status == 200 else None
 
             if not me_profile_full:
-                return await redirection_to_sso(
-                    with_new_session_cookie, set_session_value, request_url(request)
-                )
+                return await redirection_to_sso(with_new_session_cookie, set_session_value, request_url(request))
 
             me_profile = {
                 'email': me_profile_full['email'],
@@ -828,11 +706,7 @@ async def async_main():
             }
             with await redis_pool as conn:
                 await conn.execute(
-                    'SET',
-                    redis_profile_key,
-                    json.dumps(me_profile).encode('utf-8'),
-                    'EX',
-                    60,
+                    'SET', redis_profile_key, json.dumps(me_profile).encode('utf-8'), 'EX', 60,
                 )
 
             return await handler_with_sso_headers()
@@ -851,18 +725,10 @@ async def async_main():
                 return web.Response(status=401)
 
             basic_auth_prefix = 'Basic '
-            auth_value = (
-                request.headers['Authorization'][len(basic_auth_prefix) :]
-                .strip()
-                .encode('ascii')
-            )
-            required_auth_value = base64.b64encode(
-                f'{basic_auth_user}:{basic_auth_password}'.encode('ascii')
-            )
+            auth_value = request.headers['Authorization'][len(basic_auth_prefix) :].strip().encode('ascii')
+            required_auth_value = base64.b64encode(f'{basic_auth_user}:{basic_auth_password}'.encode('ascii'))
 
-            if len(auth_value) != len(required_auth_value) or not hmac.compare_digest(
-                auth_value, required_auth_value
-            ):
+            if len(auth_value) != len(required_auth_value) or not hmac.compare_digest(auth_value, required_auth_value):
                 return web.Response(status=401)
 
             request['logger'].info('Basic-authenticated: %s', basic_auth_user)
@@ -925,9 +791,7 @@ async def async_main():
         @web.middleware
         async def _authenticate_by_ip_whitelist(request, handler):
             ip_whitelist_required = (
-                is_app_requested(request)
-                or is_requesting_credentials(request)
-                or is_requesting_files(request)
+                is_app_requested(request) or is_requesting_credentials(request) or is_requesting_files(request)
             )
 
             if not ip_whitelist_required:
@@ -935,8 +799,7 @@ async def async_main():
 
             peer_ip, _ = get_peer_ip(request)
             peer_ip_in_whitelist = any(
-                ipaddress.IPv4Address(peer_ip)
-                in ipaddress.IPv4Network(address_or_subnet)
+                ipaddress.IPv4Address(peer_ip) in ipaddress.IPv4Network(address_or_subnet)
                 for address_or_subnet in application_ip_whitelist
             )
 
@@ -949,9 +812,7 @@ async def async_main():
 
         return _authenticate_by_ip_whitelist
 
-    async with aiohttp.ClientSession(
-        auto_decompress=False, cookie_jar=aiohttp.DummyCookieJar()
-    ) as client_session:
+    async with aiohttp.ClientSession(auto_decompress=False, cookie_jar=aiohttp.DummyCookieJar()) as client_session:
         app = web.Application(
             middlewares=[
                 server_logger(),
@@ -966,15 +827,7 @@ async def async_main():
         app.add_routes(
             [
                 getattr(web, method)(r'/{path:.*}', handle)
-                for method in [
-                    'delete',
-                    'get',
-                    'head',
-                    'options',
-                    'patch',
-                    'post',
-                    'put',
-                ]
+                for method in ['delete', 'get', 'head', 'options', 'patch', 'post', 'put',]
             ]
         )
 

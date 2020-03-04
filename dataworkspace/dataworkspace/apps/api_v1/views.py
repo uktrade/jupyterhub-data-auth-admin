@@ -66,16 +66,8 @@ SCHEMA_DATA_TYPE_PATTERNS = (
         SCHEMA_STRING,
         ','.join,
     ),
-    (
-        r'^date$',
-        SCHEMA_STRING_DATE,
-        lambda v: v.strftime('%Y%m%d') if v is not None else None,
-    ),
-    (
-        r'^timestamp.*$',
-        SCHEMA_STRING_DATE_TIME,
-        lambda v: v.strftime('%Y%m%d%H%M%S') if v is not None else None,
-    ),
+    (r'^date$', SCHEMA_STRING_DATE, lambda v: v.strftime('%Y%m%d') if v is not None else None,),
+    (r'^timestamp.*$', SCHEMA_STRING_DATE_TIME, lambda v: v.strftime('%Y%m%d%H%M%S') if v is not None else None,),
     (r'^boolean$', SCHEMA_BOOLEAN, lambda v: v),
     (r'^(bigint)|(decimal)|(integer)|(numeric)|(real)$', SCHEMA_NUMBER, lambda v: v),
 )
@@ -84,11 +76,7 @@ logger = logging.getLogger('app')
 
 
 def applications_api_view(request):
-    return (
-        applications_api_GET(request)
-        if request.method == 'GET'
-        else JsonResponse({}, status=405)
-    )
+    return applications_api_GET(request) if request.method == 'GET' else JsonResponse({}, status=405)
 
 
 def applications_api_GET(request):
@@ -96,9 +84,7 @@ def applications_api_GET(request):
         {
             'applications': [
                 api_application_dict(application)
-                for application in ApplicationInstance.objects.filter(
-                    state__in=['RUNNING', 'SPAWNING']
-                )
+                for application in ApplicationInstance.objects.filter(state__in=['RUNNING', 'SPAWNING'])
             ]
         },
         status=200,
@@ -123,9 +109,7 @@ def application_api_view(request, public_host):
 
 def application_api_GET(request, public_host):
     try:
-        application_instance = get_api_visible_application_instance_by_public_host(
-            public_host
-        )
+        application_instance = get_api_visible_application_instance_by_public_host(public_host)
     except ApplicationInstance.DoesNotExist:
         return JsonResponse({}, status=404)
 
@@ -137,38 +121,23 @@ def application_api_PUT(request, public_host):
     # key prevents duplicate spawning/running applications at the same
     # public host
     try:
-        application_instance = get_api_visible_application_instance_by_public_host(
-            public_host
-        )
+        application_instance = get_api_visible_application_instance_by_public_host(public_host)
     except ApplicationInstance.DoesNotExist:
         pass
     else:
-        return JsonResponse(
-            {'message': 'Application instance already exists'}, status=409
-        )
+        return JsonResponse({'message': 'Application instance already exists'}, status=409)
 
     try:
-        (
-            application_template,
-            public_host_data,
-        ) = application_template_and_data_from_host(public_host)
+        (application_template, public_host_data,) = application_template_and_data_from_host(public_host)
     except ApplicationTemplate.DoesNotExist:
-        return JsonResponse(
-            {'message': 'Application template does not exist'}, status=400
-        )
+        return JsonResponse({'message': 'Application template does not exist'}, status=400)
 
     app_type = application_template.application_type
 
     (source_tables, db_role_schema_suffix) = (
-        (
-            source_tables_for_user(request.user),
-            db_role_schema_suffix_for_user(request.user),
-        )
+        (source_tables_for_user(request.user), db_role_schema_suffix_for_user(request.user),)
         if app_type == 'TOOL'
-        else (
-            source_tables_for_app(application_template),
-            db_role_schema_suffix_for_app(application_template),
-        )
+        else (source_tables_for_app(application_template), db_role_schema_suffix_for_app(application_template),)
     )
 
     credentials = new_private_database_credentials(
@@ -202,9 +171,7 @@ def application_api_PUT(request, public_host):
     # we know _not_ to delete any users used by running or spawning apps
     for creds in credentials:
         ApplicationInstanceDbUsers.objects.create(
-            application_instance=application_instance,
-            db_id=creds['db_id'],
-            db_username=creds['db_user'],
+            application_instance=application_instance, db_id=creds['db_id'], db_username=creds['db_user'],
         )
 
     spawn.delay(
@@ -222,9 +189,7 @@ def application_api_PUT(request, public_host):
 
 def application_api_PATCH(request, public_host):
     try:
-        application_instance = get_api_visible_application_instance_by_public_host(
-            public_host
-        )
+        application_instance = get_api_visible_application_instance_by_public_host(public_host)
     except ApplicationInstance.DoesNotExist:
         return JsonResponse({}, status=404)
 
@@ -241,9 +206,7 @@ def application_api_PATCH(request, public_host):
 
 def application_api_DELETE(request, public_host):
     try:
-        application_instance = get_api_visible_application_instance_by_public_host(
-            public_host
-        )
+        application_instance = get_api_visible_application_instance_by_public_host(public_host)
     except ApplicationInstance.DoesNotExist:
         return JsonResponse({}, status=200)
 
@@ -253,11 +216,7 @@ def application_api_DELETE(request, public_host):
 
 
 def aws_credentials_api_view(request):
-    return (
-        aws_credentials_api_GET(request)
-        if request.method == 'GET'
-        else JsonResponse({}, status=405)
-    )
+    return aws_credentials_api_GET(request) if request.method == 'GET' else JsonResponse({}, status=405)
 
 
 def aws_credentials_api_GET(request):
@@ -328,14 +287,7 @@ def schema_value_func_for_data_type(data_type):
 
 def schema_value_func_for_data_types(sourcetable):
     return [
-        (
-            {
-                'name': column_name,
-                'label': column_name.replace('_', ' ').capitalize(),
-                **schema,
-            },
-            value_func,
-        )
+        ({'name': column_name, 'label': column_name.replace('_', ' ').capitalize(), **schema,}, value_func,)
         for column_name, data_type in get_postgres_column_names_data_types(sourcetable)
         for schema, value_func in [schema_value_func_for_data_type(data_type)]
     ]
@@ -386,27 +338,19 @@ def get_rows(sourcetable, schema_value_funcs, query_var):
         )
         primary_key_column_names = [row[0] for row in cur.fetchall()]
 
-    with connect(
-        database_dsn(settings.DATABASES_DATA[sourcetable.database.memorable_name])
-    ) as conn, conn.cursor(
+    with connect(database_dsn(settings.DATABASES_DATA[sourcetable.database.memorable_name])) as conn, conn.cursor(
         name='google_data_studio_all_table_data'
     ) as cur:  # Named cursor => server-side cursor
 
         cur.itersize = cursor_itersize
         cur.arraysize = cursor_itersize
 
-        fields_sql = sql.SQL(',').join(
-            [sql.Identifier(schema['name']) for schema, _ in schema_value_funcs]
-        )
-        primary_key_sql = sql.SQL(',').join(
-            [sql.Identifier(column_name) for column_name in primary_key_column_names]
-        )
+        fields_sql = sql.SQL(',').join([sql.Identifier(schema['name']) for schema, _ in schema_value_funcs])
+        primary_key_sql = sql.SQL(',').join([sql.Identifier(column_name) for column_name in primary_key_column_names])
         schema_sql = sql.Identifier(sourcetable.schema)
         table_sql = sql.Identifier(sourcetable.table)
 
-        query_sql, vars_sql = query_var(
-            fields_sql, schema_sql, table_sql, primary_key_sql
-        )
+        query_sql, vars_sql = query_var(fields_sql, schema_sql, table_sql, primary_key_sql)
         cur.execute(query_sql, vars_sql)
 
         while True:
@@ -414,10 +358,7 @@ def get_rows(sourcetable, schema_value_funcs, query_var):
             for row in rows:
                 primary_key_values = row[: len(primary_key_column_names)]
                 requested_field_values = row[len(primary_key_column_names) :]
-                values = [
-                    schema_value_funcs[i][1](value)
-                    for i, value in enumerate(requested_field_values)
-                ]
+                values = [schema_value_funcs[i][1](value) for i, value in enumerate(requested_field_values)]
                 yield {'values': values}, primary_key_values
             if not rows:
                 break
@@ -481,18 +422,14 @@ def table_api_rows_POST(request, table_id):
     def query_vars_paginated(fields_sql, schema_sql, table_sql, primary_key_sql):
         pagination = request_dict['pagination']
         limit = int(pagination['rowCount'])
-        offset = (
-            int(pagination['startRow']) - 1
-        )  # Google Data Studio start is 1-indexed
+        offset = int(pagination['startRow']) - 1  # Google Data Studio start is 1-indexed
 
         return (
             sql.SQL(
                 '''
             SELECT {},{} FROM {}.{} ORDER BY {} LIMIT %s OFFSET %s
         '''
-            ).format(
-                primary_key_sql, fields_sql, schema_sql, table_sql, primary_key_sql
-            ),
+            ).format(primary_key_sql, fields_sql, schema_sql, table_sql, primary_key_sql),
             (limit, offset),
         )
 
@@ -502,9 +439,7 @@ def table_api_rows_POST(request, table_id):
                 '''
             SELECT {},{} FROM {}.{} ORDER BY {}
         '''
-            ).format(
-                primary_key_sql, fields_sql, schema_sql, table_sql, primary_key_sql
-            ),
+            ).format(primary_key_sql, fields_sql, schema_sql, table_sql, primary_key_sql),
             (),
         )
 
@@ -559,9 +494,7 @@ def table_api_rows_POST(request, table_id):
             )
             queue = [to_send_bytes] if to_send_bytes else []
             num_bytes_queued = len(to_send_bytes)
-            num_bytes_sent += (
-                len(chunk) + len_chunk_header(len(chunk)) + len_chunk_footer
-            )
+            num_bytes_sent += len(chunk) + len_chunk_header(len(chunk)) + len_chunk_footer
             yield chunk
 
     def yield_remaining():
@@ -571,14 +504,10 @@ def table_api_rows_POST(request, table_id):
     def yield_schema_and_rows_bytes():
         try:
             yield from yield_chunks(
-                b'{"schema":'
-                + json.dumps(get_schema(schema_value_funcs)).encode('utf-8')
-                + b',"rows":['
+                b'{"schema":' + json.dumps(get_schema(schema_value_funcs)).encode('utf-8') + b',"rows":['
             )
 
-            for i, (row, search_after) in enumerate(
-                get_rows(sourcetable, schema_value_funcs, query_vars)
-            ):
+            for i, (row, search_after) in enumerate(get_rows(sourcetable, schema_value_funcs, query_vars)):
                 yield from yield_chunks(
                     # fmt: off
                     b',' + json.dumps(row).encode('utf-8') if i != 0 else
@@ -587,11 +516,7 @@ def table_api_rows_POST(request, table_id):
                 )
 
                 if num_bytes_sent_and_queued > num_bytes_max:
-                    yield from yield_chunks(
-                        b'],"$searchAfter":'
-                        + json.dumps(search_after).encode('utf-8')
-                        + b'}'
-                    )
+                    yield from yield_chunks(b'],"$searchAfter":' + json.dumps(search_after).encode('utf-8') + b'}')
                     break
             else:
                 yield from yield_chunks(b']}')
@@ -601,6 +526,4 @@ def table_api_rows_POST(request, table_id):
             logger.exception('Error streaming to Google Data Studio')
             raise
 
-    return StreamingHttpResponse(
-        yield_schema_and_rows_bytes(), content_type='application/json', status=200
-    )
+    return StreamingHttpResponse(yield_schema_and_rows_bytes(), content_type='application/json', status=200)

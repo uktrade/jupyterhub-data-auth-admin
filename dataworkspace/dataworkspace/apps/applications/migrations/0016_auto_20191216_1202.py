@@ -10,8 +10,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='applicationinstancedbusers',
-            index=models.Index(
-                fields=['db_username'], name='application_db_user_1e30c1_idx'
-            ),
+            index=models.Index(fields=['db_username'], name='application_db_user_1e30c1_idx'),
         )
     ]

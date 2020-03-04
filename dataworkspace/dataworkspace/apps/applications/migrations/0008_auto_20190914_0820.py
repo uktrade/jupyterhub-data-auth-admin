@@ -15,9 +15,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 max_length=128,
                 unique=True,
-                validators=[
-                    django.core.validators.RegexValidator(regex='^[a-zA-Z0-9\\- ]+$')
-                ],
+                validators=[django.core.validators.RegexValidator(regex='^[a-zA-Z0-9\\- ]+$')],
                 verbose_name='application',
             ),
         )

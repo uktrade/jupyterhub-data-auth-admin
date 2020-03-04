@@ -17,24 +17,14 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_date', models.DateTimeField(auto_now_add=True)),
                 ('modified_date', models.DateTimeField(auto_now=True)),
-                (
-                    'id',
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False,),),
                 (
                     'memorable_name',
                     models.CharField(
                         help_text='Must match the set of environment variables starting with DATA_DB__[memorable_name]__',
                         max_length=128,
                         unique=True,
-                        validators=[
-                            django.core.validators.RegexValidator(regex='[A-Za-z0-9_]')
-                        ],
+                        validators=[django.core.validators.RegexValidator(regex='[A-Za-z0-9_]')],
                     ),
                 ),
                 (

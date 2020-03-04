@@ -44,7 +44,5 @@ class DatasetSearchForm(forms.Form):
     )
 
     source = forms.ModelMultipleChoiceField(
-        queryset=SourceTag.objects.order_by('name').all(),
-        required=False,
-        widget=FilterWidget("Data source"),
+        queryset=SourceTag.objects.order_by('name').all(), required=False, widget=FilterWidget("Data source"),
     )

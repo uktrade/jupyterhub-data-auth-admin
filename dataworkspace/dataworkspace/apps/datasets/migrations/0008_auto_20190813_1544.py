@@ -13,8 +13,7 @@ class Migration(migrations.Migration):
             model_name='referencedatasetfield',
             name='column_name',
             field=models.CharField(
-                help_text='Descriptive column name for the field - Column name will be '
-                'used in external databases',
+                help_text='Descriptive column name for the field - Column name will be ' 'used in external databases',
                 max_length=255,
                 null=False,
                 validators=[

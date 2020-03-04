@@ -64,15 +64,11 @@ def new_private_database_credentials(db_role_and_schema_suffix, source_tables, d
         db_schema = f'{stem}{db_role_and_schema_suffix}'
 
         database_data = settings.DATABASES_DATA[database_obj.memorable_name]
-        valid_until = (
-            datetime.datetime.now() + datetime.timedelta(days=31)
-        ).isoformat()
+        valid_until = (datetime.datetime.now() + datetime.timedelta(days=31)).isoformat()
         with connections[database_obj.memorable_name].cursor() as cur:
             # Create a user...
             cur.execute(
-                sql.SQL('CREATE USER {} WITH PASSWORD %s VALID UNTIL %s;').format(
-                    sql.Identifier(db_user)
-                ),
+                sql.SQL('CREATE USER {} WITH PASSWORD %s VALID UNTIL %s;').format(sql.Identifier(db_user)),
                 [db_password, valid_until],
             )
             cur.execute(
@@ -97,24 +93,14 @@ def new_private_database_credentials(db_role_and_schema_suffix, source_tables, d
             )
 
             # ... add the user to the role
-            cur.execute(
-                sql.SQL('GRANT {} TO {};').format(
-                    sql.Identifier(db_role), sql.Identifier(db_user)
-                )
-            )
+            cur.execute(sql.SQL('GRANT {} TO {};').format(sql.Identifier(db_role), sql.Identifier(db_user)))
 
             # ... create a schema
-            cur.execute(
-                sql.SQL('CREATE SCHEMA IF NOT EXISTS {};').format(
-                    sql.Identifier(db_schema)
-                )
-            )
+            cur.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {};').format(sql.Identifier(db_schema)))
 
             # ... set the role to be the owner of the schema
             cur.execute(
-                sql.SQL('ALTER SCHEMA {} OWNER TO {}').format(
-                    sql.Identifier(db_schema), sql.Identifier(db_role)
-                )
+                sql.SQL('ALTER SCHEMA {} OWNER TO {}').format(sql.Identifier(db_schema), sql.Identifier(db_role))
             )
 
             # ... and ensure new tables are owned by the role so all users of the role can access
@@ -191,21 +177,13 @@ def new_private_database_credentials(db_role_and_schema_suffix, source_tables, d
                     )
                     continue
                 logger.info(
-                    'Granting permissions to %s %s.%s to %s',
-                    database_obj.memorable_name,
-                    schema,
-                    table,
-                    db_user,
+                    'Granting permissions to %s %s.%s to %s', database_obj.memorable_name, schema, table, db_user,
                 )
                 cur.execute(
-                    sql.SQL('GRANT USAGE ON SCHEMA {} TO {};').format(
-                        sql.Identifier(schema), sql.Identifier(db_user)
-                    )
+                    sql.SQL('GRANT USAGE ON SCHEMA {} TO {};').format(sql.Identifier(schema), sql.Identifier(db_user))
                 )
                 tables_sql = sql.SQL('GRANT SELECT ON {}.{} TO {};').format(
-                    sql.Identifier(schema),
-                    sql.Identifier(table),
-                    sql.Identifier(db_user),
+                    sql.Identifier(schema), sql.Identifier(table), sql.Identifier(db_user),
                 )
                 cur.execute(tables_sql)
 
@@ -220,18 +198,12 @@ def new_private_database_credentials(db_role_and_schema_suffix, source_tables, d
         }
 
     database_to_tables = {
-        database_obj: [
-            (source_table['schema'], source_table['table'])
-            for source_table in source_tables_for_database
-        ]
+        database_obj: [(source_table['schema'], source_table['table']) for source_table in source_tables_for_database]
         for database_obj, source_tables_for_database in itertools.groupby(
             source_tables, lambda source_table: source_table['database']
         )
     }
-    creds = [
-        get_new_credentials(database_obj, tables)
-        for database_obj, tables in database_to_tables.items()
-    ]
+    creds = [get_new_credentials(database_obj, tables) for database_obj, tables in database_to_tables.items()]
 
     return creds
 
@@ -241,11 +213,7 @@ def write_credentials_to_bucket(user, creds):
     if settings.NOTEBOOKS_BUCKET is not None:
         bucket = settings.NOTEBOOKS_BUCKET
         s3_client = boto3.client('s3')
-        s3_prefix = (
-            'user/federated/'
-            + hashlib.sha256(str(user.profile.sso_id).encode('utf-8')).hexdigest()
-            + '/'
-        )
+        s3_prefix = 'user/federated/' + hashlib.sha256(str(user.profile.sso_id).encode('utf-8')).hexdigest() + '/'
 
         logger.info('Saving creds for %s to %s %s', user, bucket, s3_prefix)
         for cred in creds:
@@ -259,26 +227,18 @@ def write_credentials_to_bucket(user, creds):
                 f'dbmemorablename {cred["memorable_name"]}\n'
             )
             s3_client.put_object(
-                Body=object_contents.encode('utf-8'),
-                Bucket=bucket,
-                Key=key,
-                ACL='bucket-owner-full-control',
+                Body=object_contents.encode('utf-8'), Bucket=bucket, Key=key, ACL='bucket-owner-full-control',
             )
 
 
 def can_access_schema_table(user, database, schema, table):
-    sourcetable = SourceTable.objects.filter(
-        schema=schema, table=table, database__memorable_name=database
-    )
+    sourcetable = SourceTable.objects.filter(schema=schema, table=table, database__memorable_name=database)
     has_source_table_perms = (
         DataSet.objects.live()
         .filter(
             Q(published=True)
             & Q(sourcetable__in=sourcetable)
-            & (
-                Q(user_access_type='REQUIRES_AUTHENTICATION')
-                | Q(datasetuserpermission__user=user)
-            )
+            & (Q(user_access_type='REQUIRES_AUTHENTICATION') | Q(datasetuserpermission__user=user))
         )
         .exists()
     )
@@ -288,9 +248,7 @@ def can_access_schema_table(user, database, schema, table):
 
 def can_access_table_by_google_data_studio(user, table_id):
     try:
-        sourcetable = SourceTable.objects.get(
-            id=table_id, accessible_by_google_data_studio=True
-        )
+        sourcetable = SourceTable.objects.get(id=table_id, accessible_by_google_data_studio=True)
     except SourceTable.DoesNotExist:
         return False
     has_source_table_perms = (
@@ -298,10 +256,7 @@ def can_access_table_by_google_data_studio(user, table_id):
         .filter(
             Q(published=True)
             & Q(sourcetable=sourcetable)
-            & (
-                Q(user_access_type='REQUIRES_AUTHENTICATION')
-                | Q(datasetuserpermission__user=user)
-            )
+            & (Q(user_access_type='REQUIRES_AUTHENTICATION') | Q(datasetuserpermission__user=user))
         )
         .exists()
     )
@@ -347,17 +302,13 @@ def source_tables_for_app(application_template):
     ]
     reference_dataset_tables = [
         {'database': x.external_database, 'schema': 'public', 'table': x.table_name}
-        for x in ReferenceDataset.objects.live()
-        .filter(published=True, deleted=False)
-        .exclude(external_database=None)
+        for x in ReferenceDataset.objects.live().filter(published=True, deleted=False).exclude(external_database=None)
     ]
     return source_tables + reference_dataset_tables
 
 
 def view_exists(database, schema, view):
-    with connect(
-        database_dsn(settings.DATABASES_DATA[database])
-    ) as conn, conn.cursor() as cur:
+    with connect(database_dsn(settings.DATABASES_DATA[database])) as conn, conn.cursor() as cur:
         cur.execute(
             """
             SELECT 1
@@ -376,9 +327,7 @@ def view_exists(database, schema, view):
 
 
 def table_exists(database, schema, table):
-    with connect(
-        database_dsn(settings.DATABASES_DATA[database])
-    ) as conn, conn.cursor() as cur:
+    with connect(database_dsn(settings.DATABASES_DATA[database])) as conn, conn.cursor() as cur:
 
         cur.execute(
             """
@@ -413,9 +362,7 @@ def streaming_query_response(user_email, database, query, filename):
         pseudo_buffer.write(codecs.BOM_UTF8)
         csv_writer = csv.writer(pseudo_buffer, quoting=csv.QUOTE_NONNUMERIC)
 
-        with connect(
-            database_dsn(settings.DATABASES_DATA[database])
-        ) as conn, conn.cursor(
+        with connect(database_dsn(settings.DATABASES_DATA[database])) as conn, conn.cursor(
             name='all_table_data'
         ) as cur:  # Named cursor => server-side cursor
 
@@ -434,14 +381,9 @@ def streaming_query_response(user_email, database, query, filename):
                 if i == 0:
                     # Column names are not populated until the first row fetched
                     bytes_queue.put(
-                        csv_writer.writerow(
-                            [column_desc[0] for column_desc in cur.description]
-                        ),
-                        timeout=queue_timeout,
+                        csv_writer.writerow([column_desc[0] for column_desc in cur.description]), timeout=queue_timeout,
                     )
-                bytes_fetched = ''.join(
-                    csv_writer.writerow(row) for row in rows
-                ).encode('utf-8')
+                bytes_fetched = ''.join(csv_writer.writerow(row) for row in rows).encode('utf-8')
                 bytes_queue.put(bytes_fetched, timeout=queue_timeout)
                 i += len(rows)
                 if not rows:
@@ -461,19 +403,14 @@ def streaming_query_response(user_email, database, query, filename):
         if put_db_rows_to_queue_job.exception:
             raise put_db_rows_to_queue_job.exception
 
-        logger.info(
-            'streaming_query_response end: %s %s %s', user_email, database, query
-        )
+        logger.info('streaming_query_response end: %s %s %s', user_email, database, query)
 
     def handle_exception(job):
         try:
             raise job.exception
         except Exception:
             logger.exception(
-                'streaming_query_response exception: %s %s %s',
-                user_email,
-                database,
-                query,
+                'streaming_query_response exception: %s %s %s', user_email, database, query,
             )
 
     put_db_rows_to_queue_job = gevent.spawn(put_db_rows_to_queue)
@@ -488,20 +425,12 @@ def table_data(user_email, database, schema, table):
     # There is no ordering here. We just want a full dump.
     # Also, there are not likely to be updates, so a long-running
     # query shouldn't cause problems with concurrency/locking
-    query = sql.SQL('SELECT * FROM {}.{}').format(
-        sql.Identifier(schema), sql.Identifier(table)
-    )
-    return streaming_query_response(
-        user_email, database, query, F'{schema}_{table}.csv'
-    )
+    query = sql.SQL('SELECT * FROM {}.{}').format(sql.Identifier(schema), sql.Identifier(table))
+    return streaming_query_response(user_email, database, query, F'{schema}_{table}.csv')
 
 
 def get_s3_prefix(user_sso_id):
-    return (
-        'user/federated/'
-        + hashlib.sha256(user_sso_id.encode('utf-8')).hexdigest()
-        + '/'
-    )
+    return 'user/federated/' + hashlib.sha256(user_sso_id.encode('utf-8')).hexdigest() + '/'
 
 
 def create_s3_role(user_email_address, user_sso_id):
@@ -529,9 +458,7 @@ def create_s3_role(user_email_address, user_sso_id):
         # policy document
         for i in range(0, max_attempts):
             try:
-                iam_client.update_assume_role_policy(
-                    RoleName=role_name, PolicyDocument=assume_role_policy_document
-                )
+                iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=assume_role_policy_document)
             except iam_client.exceptions.NoSuchEntityException:
                 if i == max_attempts - 1:
                     raise
@@ -542,9 +469,7 @@ def create_s3_role(user_email_address, user_sso_id):
     for i in range(0, max_attempts):
         try:
             role_arn = iam_client.get_role(RoleName=role_name)['Role']['Arn']
-            logger.info(
-                'User (%s) set up AWS role... done (%s)', user_email_address, role_arn
-            )
+            logger.info('User (%s) set up AWS role... done (%s)', user_email_address, role_arn)
         except iam_client.exceptions.NoSuchEntityException:
             if i == max_attempts - 1:
                 raise
@@ -557,9 +482,7 @@ def create_s3_role(user_email_address, user_sso_id):
             iam_client.put_role_policy(
                 RoleName=role_name,
                 PolicyName=policy_name,
-                PolicyDocument=policy_document_template.replace(
-                    '__S3_PREFIX__', s3_prefix
-                ),
+                PolicyDocument=policy_document_template.replace('__S3_PREFIX__', s3_prefix),
             )
         except iam_client.exceptions.NoSuchEntityException:
             if i == max_attempts - 1:

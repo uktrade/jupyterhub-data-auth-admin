@@ -15,29 +15,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='DataSetApplicationTemplatePermission',
             fields=[
-                (
-                    'id',
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name='ID',
-                    ),
-                ),
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID',),),
                 (
                     'application_template',
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to='applications.ApplicationTemplate',
+                        on_delete=django.db.models.deletion.CASCADE, to='applications.ApplicationTemplate',
                     ),
                 ),
-                (
-                    'dataset',
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to='datasets.DataSet',
-                    ),
-                ),
+                ('dataset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='datasets.DataSet',),),
             ],
             options={
                 'db_table': 'app_datasetapplicationtemplatepermission',

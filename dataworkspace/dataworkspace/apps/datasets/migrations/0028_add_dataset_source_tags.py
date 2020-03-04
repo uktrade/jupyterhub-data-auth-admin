@@ -14,12 +14,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_date', models.DateTimeField(auto_now_add=True)),
                 ('modified_date', models.DateTimeField(auto_now=True)),
-                (
-                    'id',
-                    models.UUIDField(
-                        default=uuid.uuid4, primary_key=True, serialize=False
-                    ),
-                ),
+                ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False),),
                 ('name', models.CharField(max_length=255, unique=True)),
             ],
             options={'abstract': False},
@@ -27,10 +22,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='dataset',
             name='source_tags',
-            field=models.ManyToManyField(
-                blank=True,
-                related_name='_dataset_source_tags_+',
-                to='datasets.SourceTag',
-            ),
+            field=models.ManyToManyField(blank=True, related_name='_dataset_source_tags_+', to='datasets.SourceTag',),
         ),
     ]

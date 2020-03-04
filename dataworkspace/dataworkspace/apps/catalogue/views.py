@@ -26,16 +26,12 @@ def datagroup_item_view(request, slug):
     search_params = QueryDict('', mutable=True)
     search_params.update(GROUP_TO_SEARCH_QUERY.get(slug, {}))
 
-    return HttpResponseRedirect(
-        reverse('datasets:find_datasets') + '?' + search_params.urlencode()
-    )
+    return HttpResponseRedirect(reverse('datasets:find_datasets') + '?' + search_params.urlencode())
 
 
 @require_GET
 def dataset_full_path_view(request, group_slug, set_slug):
-    dataset = get_object_or_404(
-        DataSet.objects.live(), grouping__slug=group_slug, slug=set_slug, published=True
-    )
+    dataset = get_object_or_404(DataSet.objects.live(), grouping__slug=group_slug, slug=set_slug, published=True)
     return HttpResponseRedirect(dataset.get_absolute_url())
 
 

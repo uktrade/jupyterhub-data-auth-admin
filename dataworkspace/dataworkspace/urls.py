@@ -35,64 +35,23 @@ urlpatterns = [
     path('error_404', public_error_404_html_view),
     path('error_500', public_error_500_html_view),
     path('appstream/', login_required(appstream_view), name='appstream'),
-    path(
-        'appstream-admin/', login_required(appstream_admin_view), name='appstream_admin'
-    ),
-    path(
-        'appstream-restart/',
-        login_required(appstream_restart),
-        name='appstream_restart',
-    ),
-    path(
-        'appstream-admin/fleetstatus',
-        appstream_fleetstatus,
-        name='appstream_fleetstatus',
-    ),
-    path(
-        'tools/',
-        include(
-            ('dataworkspace.apps.applications.urls', 'applications'),
-            namespace='applications',
-        ),
-    ),
+    path('appstream-admin/', login_required(appstream_admin_view), name='appstream_admin'),
+    path('appstream-restart/', login_required(appstream_restart), name='appstream_restart',),
+    path('appstream-admin/fleetstatus', appstream_fleetstatus, name='appstream_fleetstatus',),
+    path('tools/', include(('dataworkspace.apps.applications.urls', 'applications'), namespace='applications',),),
     path(
         'visualisations/',
-        include(
-            ('dataworkspace.apps.applications.urls_visualisations', 'visualisations'),
-            namespace='visualisations',
-        ),
+        include(('dataworkspace.apps.applications.urls_visualisations', 'visualisations'), namespace='visualisations',),
     ),
-    path(
-        'catalogue/',
-        include(
-            ('dataworkspace.apps.catalogue.urls', 'catalogue'), namespace='catalogue'
-        ),
-    ),
-    path(
-        'datasets/',
-        include(('dataworkspace.apps.datasets.urls', 'datasets'), namespace='datasets'),
-    ),
+    path('catalogue/', include(('dataworkspace.apps.catalogue.urls', 'catalogue'), namespace='catalogue'),),
+    path('datasets/', include(('dataworkspace.apps.datasets.urls', 'datasets'), namespace='datasets'),),
     path('files', login_required(file_browser_html_view), name='files'),
     path('healthcheck', healthcheck_view),  # No authentication
     path('support/', login_required(SupportView.as_view()), name='support'),
-    path(
-        'support/success/<str:ticket_id>',
-        login_required(SupportView.as_view()),
-        name='support-success',
-    ),
-    path(
-        'table_data/<str:database>/<str:schema>/<str:table>',
-        login_required(table_data_view),
-        name='table_data',
-    ),
-    path(
-        'api/v1/',
-        include(('dataworkspace.apps.api_v1.urls', 'api_v1'), namespace='api-v1'),
-    ),
-    path(
-        'admin/',
-        include(('dataworkspace.apps.dw_admin.urls', 'dw_admin'), namespace='dw-admin'),
-    ),
+    path('support/success/<str:ticket_id>', login_required(SupportView.as_view()), name='support-success',),
+    path('table_data/<str:database>/<str:schema>/<str:table>', login_required(table_data_view), name='table_data',),
+    path('api/v1/', include(('dataworkspace.apps.api_v1.urls', 'api_v1'), namespace='api-v1'),),
+    path('admin/', include(('dataworkspace.apps.dw_admin.urls', 'dw_admin'), namespace='dw-admin'),),
     path('admin/', admin.site.urls),
 ]
 

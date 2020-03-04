@@ -57,9 +57,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
                 'fields-MAX_NUM_FORMS': 1000,
             },
         )
-        self.assertContains(
-            response, 'Please ensure one field is set as the unique identifier'
-        )
+        self.assertContains(response, 'Please ensure one field is set as the unique identifier')
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
 
     def test_create_reference_dataset_no_identifiers(self):
@@ -82,9 +80,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
                 'fields-0-description': 'A field',
             },
         )
-        self.assertContains(
-            response, 'Please ensure one field is set as the unique identifier'
-        )
+        self.assertContains(response, 'Please ensure one field is set as the unique identifier')
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
 
     def test_create_reference_dataset_multiple_identifiers(self):
@@ -192,8 +188,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
         self.assertContains(
             response,
-            'Column names must start with a letter and contain only '
-            'letters, numbers, underscores and full stops.',
+            'Column names must start with a letter and contain only ' 'letters, numbers, underscores and full stops.',
         )
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
 
@@ -228,9 +223,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
                 'fields-1-description': 'Another field',
             },
         )
-        self.assertContains(
-            response, 'Reference dataset with this Table name already exists.'
-        )
+        self.assertContains(response, 'Reference dataset with this Table name already exists.')
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
 
     def test_create_reference_dataset_invalid_table_name(self):
@@ -352,14 +345,10 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         field1 = factories.ReferenceDatasetFieldFactory(
             reference_dataset=reference_dataset, data_type=1, is_identifier=True
         )
-        field2 = factories.ReferenceDatasetFieldFactory(
-            reference_dataset=reference_dataset, data_type=2
-        )
+        field2 = factories.ReferenceDatasetFieldFactory(reference_dataset=reference_dataset, data_type=2)
         num_datasets = ReferenceDataset.objects.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test ref 1',
@@ -407,14 +396,10 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         field1 = factories.ReferenceDatasetFieldFactory(
             reference_dataset=reference_dataset, data_type=1, is_identifier=True
         )
-        field2 = factories.ReferenceDatasetFieldFactory(
-            reference_dataset=reference_dataset, data_type=2
-        )
+        field2 = factories.ReferenceDatasetFieldFactory(reference_dataset=reference_dataset, data_type=2)
         num_datasets = ReferenceDataset.objects.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test ref 1',
@@ -464,9 +449,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
         num_datasets = ReferenceDataset.objects.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test ref 1',
@@ -509,19 +492,14 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
     def test_edit_reference_dataset_invalid_column_name(self):
         reference_dataset = self._create_reference_dataset()
         field1 = factories.ReferenceDatasetFieldFactory(
-            reference_dataset=reference_dataset,
-            data_type=1,
-            is_identifier=True,
-            column_name='field_1',
+            reference_dataset=reference_dataset, data_type=1, is_identifier=True, column_name='field_1',
         )
         field2 = factories.ReferenceDatasetFieldFactory(
             reference_dataset=reference_dataset, data_type=2, column_name='field_2'
         )
         num_datasets = ReferenceDataset.objects.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test ref 1',
@@ -561,25 +539,18 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
         self.assertContains(
             response,
-            'Column names must start with a letter and '
-            'contain only letters, numbers, underscores and full stops.',
+            'Column names must start with a letter and ' 'contain only letters, numbers, underscores and full stops.',
         )
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
 
     def test_edit_reference_dataset_duplicate_names(self):
         reference_dataset = self._create_reference_dataset()
         field1 = factories.ReferenceDatasetFieldFactory(
-            reference_dataset=reference_dataset,
-            data_type=1,
-            is_identifier=True,
-            column_name='field_1',
-            name='field',
+            reference_dataset=reference_dataset, data_type=1, is_identifier=True, column_name='field_1', name='field',
         )
         num_datasets = ReferenceDataset.objects.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test ref 1',
@@ -626,9 +597,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
         num_datasets = ReferenceDataset.objects.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': reference_dataset.name,
@@ -669,24 +638,16 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         # Ensure that the table name cannot be changed via the admin
         reference_dataset = self._create_reference_dataset()
         field1 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=reference_dataset,
-            data_type=1,
-            is_identifier=True,
-            description='test',
+            reference_dataset=reference_dataset, data_type=1, is_identifier=True, description='test',
         )
         field2 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=reference_dataset,
-            data_type=2,
-            is_identifier=False,
-            description='test',
+            reference_dataset=reference_dataset, data_type=2, is_identifier=False, description='test',
         )
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         original_table_name = reference_dataset.table_name
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': reference_dataset.name,
@@ -726,8 +687,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
         self.assertEqual(num_fields, reference_dataset.fields.count())
         self.assertEqual(
-            ReferenceDataset.objects.get(pk=reference_dataset.id).table_name,
-            original_table_name,
+            ReferenceDataset.objects.get(pk=reference_dataset.id).table_name, original_table_name,
         )
 
     def test_edit_reference_dataset_valid(self):
@@ -741,9 +701,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -801,9 +759,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -835,9 +791,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
                 'fields-1-DELETE': 'on',
             },
         )
-        self.assertContains(
-            response, 'Please ensure one field is set as the unique identifier'
-        )
+        self.assertContains(response, 'Please ensure one field is set as the unique identifier')
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
         self.assertEqual(num_fields, reference_dataset.fields.count())
 
@@ -847,17 +801,12 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             reference_dataset=reference_dataset, data_type=1, is_identifier=True
         )
         field2 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=reference_dataset,
-            data_type=2,
-            is_identifier=False,
-            is_display_name=True,
+            reference_dataset=reference_dataset, data_type=2, is_identifier=False, is_display_name=True,
         )
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -890,9 +839,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
                 'fields-1-DELETE': 'on',
             },
         )
-        self.assertContains(
-            response, 'Please ensure one field is set as the display name'
-        )
+        self.assertContains(response, 'Please ensure one field is set as the display name')
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
         self.assertEqual(num_fields, reference_dataset.fields.count())
 
@@ -907,9 +854,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -943,9 +888,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
                 'fields-1-DELETE': 'on',
             },
         )
-        self.assertContains(
-            response, 'Please ensure one field is set as the unique identifier'
-        )
+        self.assertContains(response, 'Please ensure one field is set as the unique identifier')
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
         self.assertEqual(num_fields, reference_dataset.fields.count())
 
@@ -960,9 +903,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -1018,23 +959,12 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             is_identifier=False,
         )
         reference_dataset.save_record(
-            None,
-            {
-                'reference_dataset': reference_dataset,
-                field1.column_name: 1,
-                field2.column_name: 'record1',
-            },
+            None, {'reference_dataset': reference_dataset, field1.column_name: 1, field2.column_name: 'record1',},
         )
         num_records = len(reference_dataset.get_records())
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-add', args=(reference_dataset.id,)
-            ),
-            {
-                'reference_dataset': reference_dataset.id,
-                field1.column_name: 1,
-                field2.column_name: 'record2',
-            },
+            reverse('dw-admin:reference-dataset-record-add', args=(reference_dataset.id,)),
+            {'reference_dataset': reference_dataset.id, field1.column_name: 1, field2.column_name: 'record2',},
         )
         self.assertContains(response, 'A record with this identifier already exists')
         self.assertEqual(num_records, len(reference_dataset.get_records()))
@@ -1054,23 +984,12 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             is_identifier=False,
         )
         reference_dataset.save_record(
-            None,
-            {
-                'reference_dataset': reference_dataset,
-                field1.column_name: 1,
-                field2.column_name: 'record1',
-            },
+            None, {'reference_dataset': reference_dataset, field1.column_name: 1, field2.column_name: 'record1',},
         )
         num_records = len(reference_dataset.get_records())
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-add', args=(reference_dataset.id,)
-            ),
-            {
-                'reference_dataset': reference_dataset.id,
-                field1.column_name: '',
-                field2.column_name: 'record2',
-            },
+            reverse('dw-admin:reference-dataset-record-add', args=(reference_dataset.id,)),
+            {'reference_dataset': reference_dataset.id, field1.column_name: '', field2.column_name: 'record2',},
         )
         self.assertContains(response, 'This field is required')
         self.assertEqual(num_records, len(reference_dataset.get_records()))
@@ -1083,9 +1002,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             data_type=ReferenceDatasetField.DATA_TYPE_INT,
             is_identifier=True,
         )
-        url = reverse(
-            'dw-admin:reference-dataset-record-add', args=(reference_dataset.id,)
-        )
+        url = reverse('dw-admin:reference-dataset-record-add', args=(reference_dataset.id,))
         num_records = len(reference_dataset.get_records())
 
         # Int
@@ -1124,9 +1041,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
     def test_reference_data_record_create(self):
         reference_dataset = self._create_reference_dataset()
         field1 = factories.ReferenceDatasetFieldFactory.create(
-            name='char',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_CHAR,
+            name='char', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_CHAR,
         )
         field2 = factories.ReferenceDatasetFieldFactory.create(
             name='int',
@@ -1135,29 +1050,19 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             is_identifier=True,
         )
         field3 = factories.ReferenceDatasetFieldFactory.create(
-            name='float',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_FLOAT,
+            name='float', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_FLOAT,
         )
         field4 = factories.ReferenceDatasetFieldFactory.create(
-            name='date',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_DATE,
+            name='date', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_DATE,
         )
         field5 = factories.ReferenceDatasetFieldFactory.create(
-            name='time',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_TIME,
+            name='time', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_TIME,
         )
         field6 = factories.ReferenceDatasetFieldFactory.create(
-            name='datetime',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_DATETIME,
+            name='datetime', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_DATETIME,
         )
         field7 = factories.ReferenceDatasetFieldFactory.create(
-            name='bool',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_BOOLEAN,
+            name='bool', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_BOOLEAN,
         )
         num_records = len(reference_dataset.get_records())
         fields = {
@@ -1171,10 +1076,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             field7.column_name: True,
         }
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-add', args=(reference_dataset.id,)
-            ),
-            fields,
+            reverse('dw-admin:reference-dataset-record-add', args=(reference_dataset.id,)), fields,
         )
         self.assertContains(response, 'Reference dataset record added successfully')
         self.assertEqual(num_records + 1, len(reference_dataset.get_records()))
@@ -1192,19 +1094,12 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             data_type=ReferenceDatasetField.DATA_TYPE_INT,
             is_identifier=True,
         )
-        reference_dataset.save_record(
-            None, {'reference_dataset': reference_dataset, field.column_name: 1}
-        )
-        reference_dataset.save_record(
-            None, {'reference_dataset': reference_dataset, field.column_name: 2}
-        )
+        reference_dataset.save_record(None, {'reference_dataset': reference_dataset, field.column_name: 1})
+        reference_dataset.save_record(None, {'reference_dataset': reference_dataset, field.column_name: 2})
         num_records = len(reference_dataset.get_records())
         record = reference_dataset.get_records()[0]
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-edit',
-                args=(reference_dataset.id, record.id),
-            ),
+            reverse('dw-admin:reference-dataset-record-edit', args=(reference_dataset.id, record.id),),
             {'reference_dataset': reference_dataset.id, field.column_name: 2},
         )
         self.assertContains(response, 'A record with this identifier already exists')
@@ -1213,9 +1108,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
     def test_reference_data_record_edit_valid(self):
         reference_dataset = self._create_reference_dataset()
         field1 = factories.ReferenceDatasetFieldFactory.create(
-            name='char',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_CHAR,
+            name='char', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_CHAR,
         )
         field2 = factories.ReferenceDatasetFieldFactory.create(
             name='int',
@@ -1224,29 +1117,19 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             is_identifier=True,
         )
         field3 = factories.ReferenceDatasetFieldFactory.create(
-            name='float',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_FLOAT,
+            name='float', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_FLOAT,
         )
         field4 = factories.ReferenceDatasetFieldFactory.create(
-            name='date',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_DATE,
+            name='date', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_DATE,
         )
         field5 = factories.ReferenceDatasetFieldFactory.create(
-            name='time',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_TIME,
+            name='time', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_TIME,
         )
         field6 = factories.ReferenceDatasetFieldFactory.create(
-            name='datetime',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_DATETIME,
+            name='datetime', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_DATETIME,
         )
         field7 = factories.ReferenceDatasetFieldFactory.create(
-            name='bool',
-            reference_dataset=reference_dataset,
-            data_type=ReferenceDatasetField.DATA_TYPE_BOOLEAN,
+            name='bool', reference_dataset=reference_dataset, data_type=ReferenceDatasetField.DATA_TYPE_BOOLEAN,
         )
         reference_dataset.save_record(
             None,
@@ -1274,11 +1157,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             field7.column_name: True,
         }
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-edit',
-                args=(reference_dataset.id, record.id),
-            ),
-            update_fields,
+            reverse('dw-admin:reference-dataset-record-edit', args=(reference_dataset.id, record.id),), update_fields,
         )
         self.assertContains(response, 'Reference dataset record updated successfully')
         self.assertEqual(num_records, len(reference_dataset.get_records()))
@@ -1296,20 +1175,14 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             data_type=ReferenceDatasetField.DATA_TYPE_INT,
             is_identifier=True,
         )
-        reference_dataset.save_record(
-            None, {'reference_dataset': reference_dataset, field.column_name: 1}
-        )
+        reference_dataset.save_record(None, {'reference_dataset': reference_dataset, field.column_name: 1})
         num_records = len(reference_dataset.get_records())
         record = reference_dataset.get_records().first()
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-delete',
-                args=(reference_dataset.id, record.id),
-            )
+            reverse('dw-admin:reference-dataset-record-delete', args=(reference_dataset.id, record.id),)
         )
         self.assertContains(
-            response,
-            'Are you sure you want to delete the record below from the reference data item',
+            response, 'Are you sure you want to delete the record below from the reference data item',
         )
         self.assertEqual(num_records, len(reference_dataset.get_records()))
 
@@ -1321,16 +1194,11 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             data_type=ReferenceDatasetField.DATA_TYPE_INT,
             is_identifier=True,
         )
-        reference_dataset.save_record(
-            None, {'reference_dataset': reference_dataset, field.column_name: 1}
-        )
+        reference_dataset.save_record(None, {'reference_dataset': reference_dataset, field.column_name: 1})
         num_records = len(reference_dataset.get_records())
         record = reference_dataset.get_records()[0]
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-delete',
-                args=(reference_dataset.id, record.id),
-            ),
+            reverse('dw-admin:reference-dataset-record-delete', args=(reference_dataset.id, record.id),),
             {'id': record.id},
         )
         self.assertContains(response, 'Reference dataset record deleted successfully')
@@ -1345,9 +1213,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -1381,29 +1247,21 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             },
         )
         self.assertContains(
-            response,
-            'Select a valid choice. That choice is not one of the available choices.',
+            response, 'Select a valid choice. That choice is not one of the available choices.',
         )
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
         self.assertEqual(num_fields, reference_dataset.fields.count())
 
     def test_create_linked_field_as_foreign_key(self):
         reference_dataset = self._create_reference_dataset()
-        linked_dataset = self._create_reference_dataset(
-            table_name='test_linked', slug='test-linked'
-        )
+        linked_dataset = self._create_reference_dataset(table_name='test_linked', slug='test-linked')
         field1 = factories.ReferenceDatasetFieldFactory.create(
-            reference_dataset=reference_dataset,
-            data_type=1,
-            is_identifier=True,
-            column_name='test',
+            reference_dataset=reference_dataset, data_type=1, is_identifier=True, column_name='test',
         )
         num_datasets = ReferenceDataset.objects.count()
         num_fields = reference_dataset.fields.count()
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -1437,21 +1295,15 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
                 'fields-1-is_identifier': 'on',
             },
         )
-        self.assertContains(
-            response, 'Identifier field cannot be linked reference data type'
-        )
+        self.assertContains(response, 'Identifier field cannot be linked reference data type')
         self.assertEqual(num_datasets, ReferenceDataset.objects.count())
         self.assertEqual(num_fields, reference_dataset.fields.count())
 
     def test_linked_to_dataset_delete(self):
         # Do not allow deletion of a reference dataset if it is linked to by
         # one or more records within other datasets
-        ref_ds1 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset1'
-        )
-        ref_ds2 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset2'
-        )
+        ref_ds1 = self._create_reference_dataset(table_name='test_change_linked_dataset1')
+        ref_ds2 = self._create_reference_dataset(table_name='test_change_linked_dataset2')
         self._create_reference_dataset(table_name='test_change_linked_dataset3')
         ReferenceDatasetField.objects.create(
             name='refid',
@@ -1462,11 +1314,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             is_display_name=True,
         )
         ReferenceDatasetField.objects.create(
-            name='link',
-            column_name='link',
-            reference_dataset=ref_ds1,
-            data_type=8,
-            linked_reference_dataset=ref_ds2,
+            name='link', column_name='link', reference_dataset=ref_ds1, data_type=8, linked_reference_dataset=ref_ds2,
         )
 
         ReferenceDatasetField.objects.create(
@@ -1479,23 +1327,15 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
 
         # Save a record in the linked to dataset
-        record = ref_ds2.save_record(
-            None, {'reference_dataset': ref_ds2, 'refid': 'test'}
-        )
+        record = ref_ds2.save_record(None, {'reference_dataset': ref_ds2, 'refid': 'test'})
 
         # Save a record in the linked from dataset (linking to the one above)
         ref_ds1.save_record(
-            None,
-            {
-                'reference_dataset': ref_ds1,
-                'refid': 'another_test',
-                'link_id': record.id,
-            },
+            None, {'reference_dataset': ref_ds1, 'refid': 'another_test', 'link_id': record.id,},
         )
 
         response = self._authenticated_post(
-            reverse('admin:datasets_referencedataset_delete', args=(ref_ds2.id,)),
-            {'id': ref_ds2.id},
+            reverse('admin:datasets_referencedataset_delete', args=(ref_ds2.id,)), {'id': ref_ds2.id},
         )
         self.assertContains(
             response,
@@ -1506,18 +1346,10 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
     def test_delete_linked_to_reference_dataset_record(self):
         # Do not allow deletion of a reference dataset record if it is linked to by
         # one or more records within other datasets
-        ref_ds1 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset1'
-        )
-        ref_ds2 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset2'
-        )
+        ref_ds1 = self._create_reference_dataset(table_name='test_change_linked_dataset1')
+        ref_ds2 = self._create_reference_dataset(table_name='test_change_linked_dataset2')
         ReferenceDatasetField.objects.create(
-            name='refid',
-            column_name='refid',
-            reference_dataset=ref_ds1,
-            data_type=1,
-            is_identifier=True,
+            name='refid', column_name='refid', reference_dataset=ref_ds1, data_type=1, is_identifier=True,
         )
         ReferenceDatasetField.objects.create(
             name='link',
@@ -1538,51 +1370,29 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
 
         # Save a record in the linked to dataset
-        linked_to = ref_ds2.save_record(
-            None, {'reference_dataset': ref_ds2, 'refid': 'test'}
-        )
+        linked_to = ref_ds2.save_record(None, {'reference_dataset': ref_ds2, 'refid': 'test'})
 
         # Save a record in the linked from dataset (linking to the record above)
         linked_from = ref_ds1.save_record(
-            None,
-            {
-                'reference_dataset': ref_ds1,
-                'refid': 'another_test',
-                'link_id': linked_to.id,
-            },
+            None, {'reference_dataset': ref_ds1, 'refid': 'another_test', 'link_id': linked_to.id,},
         )
 
         response = self._authenticated_post(
-            reverse(
-                'dw-admin:reference-dataset-record-delete',
-                args=(ref_ds2.id, linked_to.id),
-            ),
+            reverse('dw-admin:reference-dataset-record-delete', args=(ref_ds2.id, linked_to.id),),
             {'id': linked_from.id},
         )
         self.assertContains(
-            response,
-            'The record below could not be deleted as it is linked to '
-            'by other reference data records',
+            response, 'The record below could not be deleted as it is linked to ' 'by other reference data records',
         )
 
     def test_change_linked_to_field_existing_records(self):
         # Ensure you can't edit linked reference dataset field if
         # there are already records linking to it
-        ref_ds1 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset1'
-        )
-        ref_ds2 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset2'
-        )
-        ref_ds3 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset3'
-        )
+        ref_ds1 = self._create_reference_dataset(table_name='test_change_linked_dataset1')
+        ref_ds2 = self._create_reference_dataset(table_name='test_change_linked_dataset2')
+        ref_ds3 = self._create_reference_dataset(table_name='test_change_linked_dataset3')
         field1 = ReferenceDatasetField.objects.create(
-            name='refid',
-            column_name='refid',
-            reference_dataset=ref_ds1,
-            data_type=1,
-            is_identifier=True,
+            name='refid', column_name='refid', reference_dataset=ref_ds1, data_type=1, is_identifier=True,
         )
         field2 = ReferenceDatasetField.objects.create(
             name='link',
@@ -1603,18 +1413,11 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
 
         # Save a record in the linked to dataset
-        linked_to = ref_ds2.save_record(
-            None, {'reference_dataset': ref_ds2, 'refid': 'test'}
-        )
+        linked_to = ref_ds2.save_record(None, {'reference_dataset': ref_ds2, 'refid': 'test'})
 
         # Save a record in the linked from dataset (linking to the one above)
         ref_ds1.save_record(
-            None,
-            {
-                'reference_dataset': ref_ds1,
-                'refid': 'another_test',
-                'link_id': linked_to.id,
-            },
+            None, {'reference_dataset': ref_ds1, 'refid': 'another_test', 'link_id': linked_to.id,},
         )
 
         response = self._authenticated_post(
@@ -1655,28 +1458,16 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             },
         )
         self.assertContains(
-            response,
-            'Unable to change linked reference dataset when relations '
-            'exist in this dataset',
+            response, 'Unable to change linked reference dataset when relations ' 'exist in this dataset',
         )
 
     def test_change_linked_reference_dataset(self):
         # If no records with links exist we should be able to edit the ref dataset link
-        ref_ds1 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset1'
-        )
-        ref_ds2 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset2'
-        )
-        ref_ds3 = self._create_reference_dataset(
-            table_name='test_change_linked_dataset3'
-        )
+        ref_ds1 = self._create_reference_dataset(table_name='test_change_linked_dataset1')
+        ref_ds2 = self._create_reference_dataset(table_name='test_change_linked_dataset2')
+        ref_ds3 = self._create_reference_dataset(table_name='test_change_linked_dataset3')
         field1 = ReferenceDatasetField.objects.create(
-            name='refid',
-            column_name='refid',
-            reference_dataset=ref_ds1,
-            data_type=1,
-            is_identifier=True,
+            name='refid', column_name='refid', reference_dataset=ref_ds1, data_type=1, is_identifier=True,
         )
         field2 = ReferenceDatasetField.objects.create(
             name='link',
@@ -1701,8 +1492,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
 
         # Save a record in the linked from dataset (linking to the one above)
         ref_ds1.save_record(
-            None,
-            {'reference_dataset': ref_ds1, 'refid': 'another_test', 'link_id': None},
+            None, {'reference_dataset': ref_ds1, 'refid': 'another_test', 'link_id': None},
         )
 
         response = self._authenticated_post(
@@ -1786,10 +1576,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             },
         )
         self.assertContains(
-            response,
-            'Linked reference dataset does not exist on external database {}'.format(
-                db.memorable_name
-            ),
+            response, 'Linked reference dataset does not exist on external database {}'.format(db.memorable_name),
         )
 
     def test_link_to_external_dataset(self):
@@ -1834,9 +1621,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         self.assertContains(
             response,
             'The Reference dataset “<a href="/admin/datasets/referencedataset/{}/change/">'
-            'linked from</a>” was added successfully.'.format(
-                ReferenceDataset.objects.last().id
-            ),
+            'linked from</a>” was added successfully.'.format(ReferenceDataset.objects.last().id),
             html=True,
         )
 
@@ -1848,9 +1633,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             data_type=ReferenceDatasetField.DATA_TYPE_CHAR,
             is_identifier=True,
         )
-        to_link_record = to_link_ds.save_record(
-            None, {'reference_dataset': to_link_ds, 'identifier': 'a'}
-        )
+        to_link_record = to_link_ds.save_record(None, {'reference_dataset': to_link_ds, 'identifier': 'a'})
 
         from_link_ds = self._create_reference_dataset(table_name='from_link_ds')
         factories.ReferenceDatasetFieldFactory.create(
@@ -1874,8 +1657,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             'link': to_link_record.id,
         }
         response = self._authenticated_post(
-            reverse('dw-admin:reference-dataset-record-add', args=(from_link_ds.id,)),
-            fields,
+            reverse('dw-admin:reference-dataset-record-add', args=(from_link_ds.id,)), fields,
         )
         self.assertContains(response, 'Reference dataset record added successfully')
         self.assertEqual(num_from_records + 1, len(from_link_ds.get_records()))
@@ -1883,12 +1665,8 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
 
     def test_reference_data_create_circular_link(self):
         # Create a dataset that links to a second dataset
-        ref_ds1 = factories.ReferenceDatasetFactory.create(
-            name='refds1', table_name='refds1'
-        )
-        ref_ds2 = factories.ReferenceDatasetFactory.create(
-            name='refds2', table_name='refds2'
-        )
+        ref_ds1 = factories.ReferenceDatasetFactory.create(name='refds1', table_name='refds1')
+        ref_ds2 = factories.ReferenceDatasetFactory.create(name='refds2', table_name='refds2')
         factories.ReferenceDatasetFieldFactory.create(
             name='refid',
             column_name='refid',
@@ -1948,15 +1726,11 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             },
         )
         self.assertTrue(ref_ds2.fields.count(), 2)
-        self.assertContains(
-            response, 'Unable to link to a dataset that links to this dataset'
-        )
+        self.assertContains(response, 'Unable to link to a dataset that links to this dataset')
 
     def test_reference_dataset_upload_invalid_columns(self):
         # Create ref dataset
-        ref_ds1 = factories.ReferenceDatasetFactory.create(
-            name='ref_invalid_upload', table_name='ref_invalid_upload'
-        )
+        ref_ds1 = factories.ReferenceDatasetFactory.create(name='ref_invalid_upload', table_name='ref_invalid_upload')
         # Create 2 ref dataset fields
         factories.ReferenceDatasetFieldFactory.create(
             name='refid',
@@ -1974,26 +1748,18 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         )
 
         # Create in memory file with 1 incorrect field name
-        file1 = SimpleUploadedFile(
-            'file1.csv',
-            b'refid,invalid\r\nA1,test1\r\nA2,test2\r\n',
-            content_type='text/csv',
-        )
+        file1 = SimpleUploadedFile('file1.csv', b'refid,invalid\r\nA1,test1\r\nA2,test2\r\n', content_type='text/csv',)
 
         # Assert upload fails with error message
         response = self._authenticated_post(
-            reverse('dw-admin:reference-dataset-record-upload', args=(ref_ds1.id,)),
-            {'file': file1},
+            reverse('dw-admin:reference-dataset-record-upload', args=(ref_ds1.id,)), {'file': file1},
         )
         self.assertContains(
-            response,
-            'Please ensure the uploaded csv file headers include all the target reference dataset columns',
+            response, 'Please ensure the uploaded csv file headers include all the target reference dataset columns',
         )
 
     def test_reference_dataset_upload_invalid_file_type(self):
-        ref_ds1 = factories.ReferenceDatasetFactory.create(
-            name='ref_invalid_upload', table_name='ref_invalid_upload'
-        )
+        ref_ds1 = factories.ReferenceDatasetFactory.create(name='ref_invalid_upload', table_name='ref_invalid_upload')
         factories.ReferenceDatasetFieldFactory.create(
             name='refid',
             column_name='refid',
@@ -2008,22 +1774,15 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             data_type=ReferenceDatasetField.DATA_TYPE_CHAR,
             is_display_name=True,
         )
-        file1 = SimpleUploadedFile(
-            'file1.txt', b'some text\r\n', content_type='text/plain'
-        )
+        file1 = SimpleUploadedFile('file1.txt', b'some text\r\n', content_type='text/plain')
         response = self._authenticated_post(
-            reverse('dw-admin:reference-dataset-record-upload', args=(ref_ds1.id,)),
-            {'file': file1},
+            reverse('dw-admin:reference-dataset-record-upload', args=(ref_ds1.id,)), {'file': file1},
         )
         self.assertContains(response, 'File extension “txt” is not allowed.')
 
     def test_reference_data_upload(self):
-        ref_ds1 = factories.ReferenceDatasetFactory.create(
-            name='ref_invalid_upload', table_name='ref_invalid_upload'
-        )
-        ref_ds2 = factories.ReferenceDatasetFactory.create(
-            name='ref_invalid_upload2', table_name='ref_invalid_upload2'
-        )
+        ref_ds1 = factories.ReferenceDatasetFactory.create(name='ref_invalid_upload', table_name='ref_invalid_upload')
+        ref_ds2 = factories.ReferenceDatasetFactory.create(name='ref_invalid_upload2', table_name='ref_invalid_upload2')
         factories.ReferenceDatasetFieldFactory.create(
             name='refid',
             column_name='refid',
@@ -2063,22 +1822,12 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         ref_ds2.increment_schema_version()
 
         # Add records to the "linked to" table
-        ref_ds2.save_record(
-            None, {'reference_dataset': ref_ds2, 'refid': 'A1', 'name': 'Linked to 1'}
-        )
-        linked_to = ref_ds2.save_record(
-            None, {'reference_dataset': ref_ds2, 'refid': 'A2', 'name': 'Linked to 2'}
-        )
+        ref_ds2.save_record(None, {'reference_dataset': ref_ds2, 'refid': 'A1', 'name': 'Linked to 1'})
+        linked_to = ref_ds2.save_record(None, {'reference_dataset': ref_ds2, 'refid': 'A2', 'name': 'Linked to 2'})
 
         # Add some records to the "linked from" table
         existing_record = ref_ds1.save_record(
-            None,
-            {
-                'reference_dataset': ref_ds1,
-                'refid': 'B1',
-                'name': 'Linked from 1',
-                'link_id': linked_to.id,
-            },
+            None, {'reference_dataset': ref_ds1, 'refid': 'B1', 'name': 'Linked from 1', 'link_id': linked_to.id,},
         )
         record_count = ref_ds1.get_records().count()
 
@@ -2089,30 +1838,20 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
             b'B3,New record 2,',  # Add record without link
             b'B4,Another record,Z1',  # Invalid link
         ]
-        file1 = SimpleUploadedFile(
-            'file1.csv', b'\r\n'.join(upload_content), content_type='text/csv'
-        )
+        file1 = SimpleUploadedFile('file1.csv', b'\r\n'.join(upload_content), content_type='text/csv')
         response = self._authenticated_post(
-            reverse('dw-admin:reference-dataset-record-upload', args=(ref_ds1.id,)),
-            {'file': file1},
+            reverse('dw-admin:reference-dataset-record-upload', args=(ref_ds1.id,)), {'file': file1},
         )
         self.assertContains(response, 'Reference dataset upload completed successfully')
         self.assertContains(response, 'Reference dataset upload completed successfully')
         log_records = ReferenceDatasetUploadLog.objects.last().records.all()
         self.assertEqual(log_records.count(), 4)
         self.assertEqual(
-            log_records[0].status,
-            ReferenceDatasetUploadLogRecord.STATUS_SUCCESS_UPDATED,
+            log_records[0].status, ReferenceDatasetUploadLogRecord.STATUS_SUCCESS_UPDATED,
         )
-        self.assertEqual(
-            log_records[1].status, ReferenceDatasetUploadLogRecord.STATUS_SUCCESS_ADDED
-        )
-        self.assertEqual(
-            log_records[2].status, ReferenceDatasetUploadLogRecord.STATUS_SUCCESS_ADDED
-        )
-        self.assertEqual(
-            log_records[3].status, ReferenceDatasetUploadLogRecord.STATUS_FAILURE
-        )
+        self.assertEqual(log_records[1].status, ReferenceDatasetUploadLogRecord.STATUS_SUCCESS_ADDED)
+        self.assertEqual(log_records[2].status, ReferenceDatasetUploadLogRecord.STATUS_SUCCESS_ADDED)
+        self.assertEqual(log_records[3].status, ReferenceDatasetUploadLogRecord.STATUS_FAILURE)
         self.assertEqual(ref_ds1.get_records().count(), record_count + 2)
 
         # Check that the existing record was updated
@@ -2131,11 +1870,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         self.assertIsNone(new_record.link)
 
         # Check record with invalid link was not created
-        self.assertFalse(
-            ref_ds1.get_records()
-            .filter(**{ref_ds1.identifier_field.column_name: 'B4'})
-            .exists()
-        )
+        self.assertFalse(ref_ds1.get_records().filter(**{ref_ds1.identifier_field.column_name: 'B4'}).exists())
 
     def test_delete_sort_field(self):
         reference_dataset = self._create_reference_dataset()
@@ -2149,9 +1884,7 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
         reference_dataset.save()
 
         response = self._authenticated_post(
-            reverse(
-                'admin:datasets_referencedataset_change', args=(reference_dataset.id,)
-            ),
+            reverse('admin:datasets_referencedataset_change', args=(reference_dataset.id,)),
             {
                 'id': reference_dataset.id,
                 'name': 'test updated',
@@ -2196,31 +1929,20 @@ class TestReferenceDatasetAdmin(BaseAdminTestCase):
 class TestSourceLinkAdmin(BaseAdminTestCase):
     def test_source_link_upload_get(self):
         dataset = factories.DataSetFactory.create()
-        response = self._authenticated_get(
-            reverse('dw-admin:source-link-upload', args=(dataset.id,))
-        )
+        response = self._authenticated_get(reverse('dw-admin:source-link-upload', args=(dataset.id,)))
         self.assertContains(response, 'Upload source link')
 
     @mock.patch('dataworkspace.apps.dw_admin.views.boto3.client')
     def test_source_link_upload_failure(self, mock_client):
         mock_client().put_object.side_effect = ClientError(
-            error_response={'Error': {'Message': 'it failed'}},
-            operation_name='put_object',
+            error_response={'Error': {'Message': 'it failed'}}, operation_name='put_object',
         )
         dataset = factories.DataSetFactory.create()
         link_count = dataset.sourcelink_set.count()
-        file1 = SimpleUploadedFile(
-            'file1.txt', b'This is a test', content_type='text/plain'
-        )
+        file1 = SimpleUploadedFile('file1.txt', b'This is a test', content_type='text/plain')
         response = self._authenticated_post(
             reverse('dw-admin:source-link-upload', args=(dataset.id,)),
-            {
-                'dataset': dataset.id,
-                'name': 'Test source link',
-                'format': 'CSV',
-                'frequency': 'Never',
-                'file': file1,
-            },
+            {'dataset': dataset.id, 'name': 'Test source link', 'format': 'CSV', 'frequency': 'Never', 'file': file1,},
         )
         self.assertEqual(response.status_code, 500)
         self.assertEqual(link_count, dataset.sourcelink_set.count())
@@ -2229,18 +1951,10 @@ class TestSourceLinkAdmin(BaseAdminTestCase):
     def test_source_link_upload(self, mock_client):
         dataset = factories.DataSetFactory.create()
         link_count = dataset.sourcelink_set.count()
-        file1 = SimpleUploadedFile(
-            'file1.txt', b'This is a test', content_type='text/plain'
-        )
+        file1 = SimpleUploadedFile('file1.txt', b'This is a test', content_type='text/plain')
         response = self._authenticated_post(
             reverse('dw-admin:source-link-upload', args=(dataset.id,)),
-            {
-                'dataset': dataset.id,
-                'name': 'Test source link',
-                'format': 'CSV',
-                'frequency': 'Never',
-                'file': file1,
-            },
+            {'dataset': dataset.id, 'name': 'Test source link', 'format': 'CSV', 'frequency': 'Never', 'file': file1,},
         )
         self.assertContains(response, 'Source link uploaded successfully')
         self.assertEqual(link_count + 1, dataset.sourcelink_set.count())
@@ -2294,9 +2008,7 @@ class TestDatasetAdmin(BaseAdminTestCase):
 
     def test_delete_external_source_link(self):
         dataset = factories.DataSetFactory.create()
-        source_link = factories.SourceLinkFactory(
-            link_type=SourceLink.TYPE_EXTERNAL, dataset=dataset
-        )
+        source_link = factories.SourceLinkFactory(link_type=SourceLink.TYPE_EXTERNAL, dataset=dataset)
         link_count = dataset.sourcelink_set.count()
         response = self._authenticated_post(
             reverse('admin:datasets_datacutdataset_change', args=(dataset.id,)),
@@ -2341,13 +2053,10 @@ class TestDatasetAdmin(BaseAdminTestCase):
     @mock.patch('dataworkspace.apps.datasets.models.boto3.client')
     def test_delete_local_source_link_aws_failure(self, mock_client):
         dataset = factories.DataSetFactory.create()
-        source_link = factories.SourceLinkFactory(
-            link_type=SourceLink.TYPE_LOCAL, dataset=dataset
-        )
+        source_link = factories.SourceLinkFactory(link_type=SourceLink.TYPE_LOCAL, dataset=dataset)
         link_count = dataset.sourcelink_set.count()
         mock_client.return_value.head_object.side_effect = ClientError(
-            error_response={'Error': {'Message': 'it failed'}},
-            operation_name='head_object',
+            error_response={'Error': {'Message': 'it failed'}}, operation_name='head_object',
         )
         response = self._authenticated_post(
             reverse('admin:datasets_datacutdataset_change', args=(dataset.id,)),
@@ -2392,9 +2101,7 @@ class TestDatasetAdmin(BaseAdminTestCase):
     @mock.patch('dataworkspace.apps.datasets.models.boto3.client')
     def test_delete_local_source_link(self, mock_client):
         dataset = factories.DataSetFactory.create()
-        source_link = factories.SourceLinkFactory(
-            link_type=SourceLink.TYPE_LOCAL, dataset=dataset
-        )
+        source_link = factories.SourceLinkFactory(link_type=SourceLink.TYPE_LOCAL, dataset=dataset)
         link_count = dataset.sourcelink_set.count()
         response = self._authenticated_post(
             reverse('admin:datasets_datacutdataset_change', args=(dataset.id,)),
@@ -2435,17 +2142,13 @@ class TestDatasetAdmin(BaseAdminTestCase):
         )
         self.assertContains(response, 'was changed successfully')
         self.assertEqual(dataset.sourcelink_set.count(), link_count - 1)
-        mock_client().delete_object.assert_called_once_with(
-            Bucket=settings.AWS_UPLOADS_BUCKET, Key='http://test.com'
-        )
+        mock_client().delete_object.assert_called_once_with(Bucket=settings.AWS_UPLOADS_BUCKET, Key='http://test.com')
 
 
 class TestDatasetAdminPytest:
     def test_sql_queries_must_be_reviewed_before_publishing(self, staff_client):
         dataset = factories.DataSetFactory.create(published=False)
-        sql = factories.CustomDatasetQueryFactory.create(
-            dataset=dataset, reviewed=False
-        )
+        sql = factories.CustomDatasetQueryFactory.create(dataset=dataset, reviewed=False)
 
         # Login to admin site
         staff_client.post(reverse('admin:index'), follow=True)
@@ -2484,27 +2187,18 @@ class TestDatasetAdminPytest:
 
         assert response.status_code == 200
         assert DataSet.objects.get(id=dataset.id).published is False
-        assert (
-            "You must review this SQL query before the dataset can be published."
-            in response.content.decode(response.charset)
+        assert "You must review this SQL query before the dataset can be published." in response.content.decode(
+            response.charset
         )
 
     @pytest.mark.parametrize(
         "request_client, expected_response_code, can_review",
-        (
-            ("client", 404, False),
-            ("sme_client", 200, False),
-            ("staff_client", 200, True),
-        ),
+        (("client", 404, False), ("sme_client", 200, False), ("staff_client", 200, True),),
         indirect=['request_client'],
     )
-    def test_sql_queries_can_only_be_reviewed_by_superusers(
-        self, request_client, expected_response_code, can_review
-    ):
+    def test_sql_queries_can_only_be_reviewed_by_superusers(self, request_client, expected_response_code, can_review):
         dataset = factories.DataSetFactory.create(published=False)
-        sql = factories.CustomDatasetQueryFactory.create(
-            dataset=dataset, reviewed=False
-        )
+        sql = factories.CustomDatasetQueryFactory.create(dataset=dataset, reviewed=False)
 
         # Login to admin site
         request_client.post(reverse('admin:index'), follow=True)
@@ -2547,16 +2241,10 @@ class TestDatasetAdminPytest:
 
     @pytest.mark.parametrize(
         "request_client, expected_response_code, should_publish",
-        (
-            ("client", 404, False),
-            ("sme_client", 200, False),
-            ("staff_client", 200, True),
-        ),
+        (("client", 404, False), ("sme_client", 200, False), ("staff_client", 200, True),),
         indirect=['request_client'],
     )
-    def test_datacut_can_only_be_published_by_superuser(
-        self, request_client, expected_response_code, should_publish
-    ):
+    def test_datacut_can_only_be_published_by_superuser(self, request_client, expected_response_code, should_publish):
         dataset = factories.DataSetFactory.create(published=False)
 
         # Login to admin site
@@ -2602,9 +2290,7 @@ class TestDatasetAdminPytest:
             (
                 "manage_unpublished_datacut_datasets",
                 'admin:datasets_datacutdataset_change',
-                partial(
-                    factories.DataSetFactory.create, type=DataSetType.DATACUT.value
-                ),
+                partial(factories.DataSetFactory.create, type=DataSetType.DATACUT.value),
             ),
             (
                 "manage_unpublished_reference_datasets",
@@ -2631,23 +2317,15 @@ class TestDatasetAdminPytest:
                 # Log into admin site
                 client.post(reverse('admin:index'), follow=True)
 
-            view_response = client.get(
-                reverse(admin_change_view, args=(dataset.id,)), follow=True
-            )
-            change_response = client.post(
-                reverse(admin_change_view, args=(dataset.id,)), follow=True
-            )
+            view_response = client.get(reverse(admin_change_view, args=(dataset.id,)), follow=True)
+            change_response = client.post(reverse(admin_change_view, args=(dataset.id,)), follow=True)
 
-            assert view_response.status_code == (
-                200 if client is authenticated_client else 403
-            )
+            assert view_response.status_code == (200 if client is authenticated_client else 403)
             assert change_response.status_code == 403
 
     @pytest.mark.django_db
     def test_manage_master_dataset_permission_allows_editing_unpublished_datasets(self):
-        dataset = factories.DataSetFactory.create(
-            published=False, name='original', type=DataSet.TYPE_MASTER_DATASET
-        )
+        dataset = factories.DataSetFactory.create(published=False, name='original', type=DataSet.TYPE_MASTER_DATASET)
         user = User.objects.create(is_staff=True)
         perm = Permission.objects.get(codename='manage_unpublished_master_datasets')
         user.user_permissions.add(perm)
@@ -2680,12 +2358,8 @@ class TestDatasetAdminPytest:
         assert DataSet.objects.get(id=dataset.id).name == 'changed'
 
     @pytest.mark.django_db
-    def test_manage_datacut_dataset_permission_allows_editing_unpublished_datasets(
-        self
-    ):
-        dataset = factories.DataSetFactory.create(
-            published=False, name='original', type=DataSet.TYPE_DATA_CUT
-        )
+    def test_manage_datacut_dataset_permission_allows_editing_unpublished_datasets(self):
+        dataset = factories.DataSetFactory.create(published=False, name='original', type=DataSet.TYPE_DATA_CUT)
         user = User.objects.create(is_staff=True)
         perm = Permission.objects.get(codename='manage_unpublished_datacut_datasets')
         user.user_permissions.add(perm)
@@ -2726,9 +2400,7 @@ class TestDatasetAdminPytest:
         assert DataSet.objects.get(id=dataset.id).name == 'changed'
 
     @pytest.mark.django_db
-    def test_manage_reference_dataset_permission_allows_editing_unpublished_datasets(
-        self
-    ):
+    def test_manage_reference_dataset_permission_allows_editing_unpublished_datasets(self):
         dataset = ReferenceDataset.objects.create(
             name='Test Reference Dataset 1',
             table_name='ref_test_dataset',

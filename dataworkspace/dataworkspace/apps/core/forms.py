@@ -3,9 +3,7 @@ from django import forms
 
 class SupportForm(forms.Form):
     email = forms.EmailField(
-        required=True,
-        label='Your email address',
-        widget=forms.EmailInput(attrs={'class': 'govuk-input'}),
+        required=True, label='Your email address', widget=forms.EmailInput(attrs={'class': 'govuk-input'}),
     )
     message = forms.CharField(
         required=True,

@@ -11,17 +11,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='referencedataset',
-            name='uuid',
-            field=models.UUIDField(default=uuid.uuid4, editable=False),
+            model_name='referencedataset', name='uuid', field=models.UUIDField(default=uuid.uuid4, editable=False),
         ),
         migrations.AlterField(
             model_name='referencedatasetfield',
             name='reference_dataset',
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name='fields',
-                to='datasets.ReferenceDataset',
+                on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='datasets.ReferenceDataset',
             ),
         ),
     ]

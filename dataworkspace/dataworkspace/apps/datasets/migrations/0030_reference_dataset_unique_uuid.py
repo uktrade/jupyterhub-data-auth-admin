@@ -12,11 +12,7 @@ class Migration(migrations.Migration):
             model_name='referencedatasetfield',
             name='reference_dataset',
             field=models.ForeignKey(
-                'ReferenceDataset',
-                db_constraint=False,
-                db_index=False,
-                null=False,
-                on_delete=models.CASCADE,
+                'ReferenceDataset', db_constraint=False, db_index=False, null=False, on_delete=models.CASCADE,
             ),
         )
     ]
