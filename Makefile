@@ -25,9 +25,9 @@ docker-clean:
 .PHONY: check
 check:
 	flake8 .
-	black --exclude=venv --skip-string-normalization --check .
+	black --check .
 
 
 .PHONY: format
 format:
-	black --exclude=venv --skip-string-normalization .
+	black .
