@@ -5,7 +5,7 @@ docker-build:
 
 .PHONY: docker-test-unit
 docker-test-unit: docker-build
-	docker-compose -f docker-compose-test.yml -p data-workspace-test run data-workspace-test pytest /dataworkspace/dataworkspace
+	docker-compose -f docker-compose-test.yml -p data-workspace-test run data-workspace-test pytest /dataworkspace/dataworkspace -vvvs -ktest_sql_queries_can_only_be_reviewed_by_superusers
 
 
 .PHONY: docker-test-integration
