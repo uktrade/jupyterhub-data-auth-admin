@@ -21,7 +21,7 @@ from django.utils.encoding import force_text
 from dataworkspace.apps.api_v1.views import (
     get_api_visible_application_instance_by_public_host,
 )
-from dataworkspace.apps.applications.gitlab import (
+from dataworkspace.gitlab import (
     DEVELOPER_ACCESS_LEVEL,
     gitlab_api_v4,
     gitlab_api_v4_with_status,

@@ -13,7 +13,7 @@ import gevent
 
 from dataworkspace.cel import celery_app
 from dataworkspace.apps.applications.models import ApplicationInstance
-from dataworkspace.apps.applications.gitlab import (
+from dataworkspace.gitlab import (
     ECR_PROJECT_ID,
     SUCCESS_PIPELINE_STATUSES,
     RUNNING_PIPELINE_STATUSES,
