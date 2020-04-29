@@ -367,7 +367,7 @@ async def async_main():
                 host_api_url,
             )
             if application['state'] == 'SPAWNING'
-            else await handle_application_http_running(
+            else await handle_application_http_running_direct(
                 downstream_request,
                 method,
                 application_upstream(application['proxy_url'], path, port_override),
@@ -443,7 +443,7 @@ async def async_main():
 
             return response
 
-    async def handle_application_http_running(
+    async def handle_application_http_running_direct(
         downstream_request, method, upstream_url, query, _
     ):
         host = downstream_request.headers['host']
