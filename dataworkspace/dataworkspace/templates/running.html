@@ -134,15 +134,19 @@
   </header>
   {% endif %}
 
-  <iframe {% if not quicksight %}src="{{ visualisation_src }}" {% endif %}sandbox="allow-forms allow-presentation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads" class="vis">
-  </iframe>
+  {% if not quicksight %}
+    <iframe src="{{ visualisation_src }}" sandbox="allow-forms allow-presentation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads" class="vis">
+    </iframe>
+  {% else %}
+    <div id="quicksight-embed-target" class="vis"></div>
+  {% endif %}
 
   {% if quicksight %}
     <script src="https://unpkg.com/amazon-quicksight-embedding-sdk@1.0.9/dist/quicksight-embedding-js-sdk.min.js" nonce="{{ request.csp_nonce }}"></script>
     <script nonce="{{ request.csp_nonce }}">
       var options = {
         url: "{{ visualisation_src | safe }}",
-        container: "iframe.vis",
+        container: "#quicksight-embed-target",
         scrolling: "no",
         locale: "en-US",
         footerPaddingEnabled: true,
