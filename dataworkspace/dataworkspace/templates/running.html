@@ -142,7 +142,8 @@
   {% endif %}
 
   {% if quicksight %}
-    <script src="https://unpkg.com/amazon-quicksight-embedding-sdk@1.0.9/dist/quicksight-embedding-js-sdk.min.js" nonce="{{ request.csp_nonce }}"></script>
+    <script src="{% get_static_prefix %}assets/vendor/quicksight/quicksight-embedding-js-sdk.min.js"></script>
+{#    <script src="https://unpkg.com/amazon-quicksight-embedding-sdk@1.0.9/dist/quicksight-embedding-js-sdk.min.js" nonce="{{ request.csp_nonce }}"></script>#}
     <script nonce="{{ request.csp_nonce }}">
       var options = {
         url: "{{ visualisation_src | safe }}",
