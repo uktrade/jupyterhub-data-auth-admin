@@ -144,6 +144,7 @@ def application_running_html_GET(request, public_host):
         f'{settings.APPLICATION_ROOT_DOMAIN}/',
         'nice_name': application_instance.application_template.nice_name,
         'wrap': application_instance.application_template.wrap,
+        'quicksight': False,
     }
 
     return render(request, 'running.html', context, status=200)
@@ -232,6 +233,7 @@ def _get_embedded_quicksight_dashboard(request, dashboard_id):
         'visualisation_src': dashboard_url,
         'nice_name': dashboard_name,
         'wrap': 'IFRAME_WITH_VISUALISATIONS_HEADER',
+        'quicksight': True,
     }
 
     return render(request, 'running.html', context, status=200)
