@@ -163,7 +163,8 @@ USE_TZ = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'formatters': {'json': {'()': 'pythonjsonlogger.jsonlogger.JsonFormatter'}},
+    'handlers': {'console': {'class': 'logging.StreamHandler', 'formatter': 'json'}},
     'loggers': {
         'django': {'handlers': ['console'], 'level': 'INFO'},
         'app': {'handlers': ['console'], 'level': 'INFO'},

@@ -68,6 +68,7 @@ pyjwt==1.7.1              # via -r requirements.in, notifications-python-client
 pyparsing==2.4.7          # via packaging
 python-dateutil==2.8.1    # via botocore, celery-redbeat, zenpy
 python-dotenv==0.12.0     # via -r requirements.in
+python-json-logger==2.0.0  # via -r requirements.in
 pytz==2020.1              # via celery, django, zenpy
 rcssmin==1.0.6            # via django-compressor
 redis==3.5.3              # via -r requirements.in, celery-redbeat, django-redis

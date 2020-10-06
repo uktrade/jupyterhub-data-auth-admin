@@ -1,6 +1,7 @@
 import asyncio
 
 import base64
+import datetime
 import hmac
 import ipaddress
 import json
@@ -15,14 +16,17 @@ import urllib
 
 import aiohttp
 from aiohttp import web
-
+from aiohttp.abc import BaseRequest, StreamResponse
+from aiohttp.web_log import AbstractAccessLogger
 import aioredis
 from elasticapm.contrib.aiohttp import ElasticAPM
 from hawkserver import authenticate_hawk_header
 from multidict import CIMultiDict
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from yarl import URL
+from pythonjsonlogger import jsonlogger
 from sentry import init_sentry
+
 
 from dataworkspace.utils import normalise_environment
 from proxy_session import SESSION_KEY, redis_session_middleware
@@ -37,12 +41,54 @@ class ContextAdapter(logging.LoggerAdapter):
         return f'[{self.extra["context"]}] {msg}', kwargs
 
 
+class MicrosAccessLogger(AbstractAccessLogger):
+    def log(self, request: BaseRequest, response: StreamResponse, time: float) -> None:
+        now = datetime.datetime.utcnow()
+        start_time = now - datetime.timedelta(seconds=time)
+        request_start_time = start_time.strftime('%Y-%m-%dT%H:%M:%S.%f+00:00')
+        request_first_line = (
+            f'{request.method} {request.path_qs} HTTP/{request.version.major}.{request.version.minor}'
+            if request
+            else '-'
+        )
+        request_method = request.method if request else '-'
+        request_path = request.path if request else '-'
+
+        remote_ip = getattr(request, 'remote', '-') if request else '-'
+        referrer = request.headers.get("Referer", '-') if request else '-'
+        user_agent = request.headers.get("User-Agent", '-') if request else '-'
+        status_code = response.status
+        response_size = response.body_length
+
+        self.logger.info(
+            '%s %s "%s" %s %s "%s" "%s"',
+            remote_ip,
+            request_start_time,
+            request_first_line,
+            status_code,
+            response_size,
+            referrer,
+            user_agent,
+            extra=dict(
+                request_start_time=request_start_time,
+                request_method=request_method,
+                request_path=request_path,
+                referrer=referrer,
+                user_agent=user_agent,
+                remote_ip=remote_ip,
+                response_size=response_size,
+                status_code=status_code,
+            ),
+        )
+
+
 PROFILE_CACHE_PREFIX = 'data_workspace_profile'
 CONTEXT_ALPHABET = string.ascii_letters + string.digits
 
 
 async def async_main():
     stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(jsonlogger.JsonFormatter(datefmt='%Y-%m-%d %H:%M:%S'))
     for logger_name in ['aiohttp.server', 'aiohttp.web', 'aiohttp.access', 'proxy']:
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.INFO)
@@ -1269,7 +1315,11 @@ async def async_main():
         if elastic_apm:
             ElasticAPM(app)
 
-        runner = web.AppRunner(app)
+        runner = web.AppRunner(
+            app,
+            access_log_format='%a %t %Tf "%r" %s %b "%{Referer}i" "%{User-Agent}i"',
+            access_log_class=MicrosAccessLogger,
+        )
         await runner.setup()
         site = web.TCPSite(runner, '0.0.0.0', port)
         await site.start()
