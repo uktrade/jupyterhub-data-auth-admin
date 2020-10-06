@@ -21,6 +21,8 @@ services:
       (
           cd "$$(dirname "$$0")"
 
+          (cd dataworkspace; npm install; npm run-script build)
+
           django-admin migrate
 
           django-admin ensure_databases_configured
