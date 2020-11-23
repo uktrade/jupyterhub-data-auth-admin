@@ -12,8 +12,8 @@ resource "aws_ecs_service" "celery" {
   }
 
   load_balancer {
-    target_group_arn = "${aws_alb_target_group.admin.arn}"
-    container_port   = "${local.admin_container_port}"
+    target_group_arn = "${aws_alb_target_group.celery.arn}"
+    container_port   = "${local.celery_container_port}"
     container_name   = "${local.celery_container_name}"
   }
 
@@ -23,7 +23,7 @@ resource "aws_ecs_service" "celery" {
 
   depends_on = [
     # The target group must have been associated with the listener first
-    "aws_alb_listener.admin",
+    "aws_alb_listener.celery",
   ]
 }
 
@@ -48,8 +48,8 @@ resource "aws_service_discovery_service" "celery" {
 resource "aws_ecs_task_definition" "celery" {
   family                   = "${var.prefix}-celery"
   container_definitions    = "${data.template_file.celery_container_definitions.rendered}"
-  execution_role_arn       = "${aws_iam_role.admin_task_execution.arn}"
-  task_role_arn            = "${aws_iam_role.admin_task.arn}"
+  execution_role_arn       = "${aws_iam_role.celery_task_execution.arn}"
+  task_role_arn            = "${aws_iam_role.celery_task.arn}"
   network_mode             = "awsvpc"
   cpu                      = "${local.celery_container_cpu}"
   memory                   = "${local.celery_container_memory}"
@@ -72,7 +72,7 @@ data "template_file" "celery_container_definitions" {
     container_cpu     = "${local.celery_container_cpu}"
     container_memory  = "${local.celery_container_memory}"
 
-    log_group  = "${aws_cloudwatch_log_group.admin.name}"
+    log_group  = "${aws_cloudwatch_log_group.celery.name}"
     log_region = "${data.aws_region.aws_region.name}"
 
     root_domain               = "${var.admin_domain}"
@@ -96,7 +96,7 @@ data "template_file" "celery_container_definitions" {
     appstream_url = "https://${var.appstream_domain}/"
     support_url = "https://${var.support_domain}/"
 
-    redis_url = "redis://${aws_elasticache_cluster.admin.cache_nodes.0.address}:6379"
+    redis_url = "redis://${aws_elasticache_cluster.celery.cache_nodes.0.address}:6379"
 
     sentry_dsn = "${var.sentry_dsn}"
 
@@ -143,7 +143,7 @@ data "template_file" "celery_container_definitions" {
 
     superset_root = "https://${var.superset_internal_domain}/"
 
-    admin_dashboard_embedding_role_arn = "${aws_iam_role.admin_dashboard_embedding.arn}"
+    celery_dashboard_embedding_role_arn = "${aws_iam_role.celery_dashboard_embedding.arn}"
 
     efs_id = "${aws_efs_file_system.notebooks.id}"
   }
@@ -160,9 +160,9 @@ data "external" "celery_current_tag" {
 }
 
 resource "aws_ecs_task_definition" "celery_store_db_creds_in_s3" {
-  family                   = "${var.prefix}-admin-store-db-creds-in-s3"
+  family                   = "${var.prefix}-celery-store-db-creds-in-s3"
   container_definitions    = "${data.template_file.celery_store_db_creds_in_s3_container_definitions.rendered}"
-  execution_role_arn       = "${aws_iam_role.admin_task_execution.arn}"
+  execution_role_arn       = "${aws_iam_role.celery_task_execution.arn}"
   task_role_arn            = "${aws_iam_role.celery_store_db_creds_in_s3_task.arn}"
   network_mode             = "awsvpc"
   cpu                      = "${local.celery_container_cpu}"
@@ -186,7 +186,7 @@ data "template_file" "celery_store_db_creds_in_s3_container_definitions" {
     container_cpu     = "${local.celery_container_cpu}"
     container_memory  = "${local.celery_container_memory}"
 
-    log_group  = "${aws_cloudwatch_log_group.admin.name}"
+    log_group  = "${aws_cloudwatch_log_group.celery.name}"
     log_region = "${data.aws_region.aws_region.name}"
 
     root_domain               = "${var.admin_domain}"
@@ -210,7 +210,7 @@ data "template_file" "celery_store_db_creds_in_s3_container_definitions" {
     appstream_url = "https://${var.appstream_domain}/"
     support_url = "https://${var.support_domain}/"
 
-    redis_url = "redis://${aws_elasticache_cluster.admin.cache_nodes.0.address}:6379"
+    redis_url = "redis://${aws_elasticache_cluster.celery.cache_nodes.0.address}:6379"
 
     sentry_dsn = "${var.sentry_dsn}"
 
@@ -257,7 +257,7 @@ data "template_file" "celery_store_db_creds_in_s3_container_definitions" {
 
     superset_root = "${aws_lb.superset_multiuser.dns_name}"
 
-    admin_dashboard_embedding_role_arn = "${aws_iam_role.admin_dashboard_embedding.arn}"
+    celery_dashboard_embedding_role_arn = "${aws_iam_role.celery_dashboard_embedding.arn}"
 
     efs_id = "${aws_efs_file_system.notebooks.id}"
   }
@@ -282,13 +282,13 @@ resource "aws_cloudwatch_log_subscription_filter" "celery" {
   destination_arn = "${var.cloudwatch_destination_arn}"
 }
 
-resource "aws_iam_role" "admin_task_execution" {
-  name               = "${var.prefix}-admin-task-execution"
+resource "aws_iam_role" "celery_task_execution" {
+  name               = "${var.prefix}-celery-task-execution"
   path               = "/"
-  assume_role_policy = "${data.aws_iam_policy_document.admin_task_execution_ecs_tasks_assume_role.json}"
+  assume_role_policy = "${data.aws_iam_policy_document.celery_task_execution_ecs_tasks_assume_role.json}"
 }
 
-data "aws_iam_policy_document" "admin_task_execution_ecs_tasks_assume_role" {
+data "aws_iam_policy_document" "celery_task_execution_ecs_tasks_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -299,18 +299,18 @@ data "aws_iam_policy_document" "admin_task_execution_ecs_tasks_assume_role" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "admin_task_execution" {
-  role       = "${aws_iam_role.admin_task_execution.name}"
-  policy_arn = "${aws_iam_policy.admin_task_execution.arn}"
+resource "aws_iam_role_policy_attachment" "celery_task_execution" {
+  role       = "${aws_iam_role.celery_task_execution.name}"
+  policy_arn = "${aws_iam_policy.celery_task_execution.arn}"
 }
 
-resource "aws_iam_policy" "admin_task_execution" {
-  name        = "${var.prefix}-admin-task-execution"
+resource "aws_iam_policy" "celery_task_execution" {
+  name        = "${var.prefix}-celery-task-execution"
   path        = "/"
-  policy       = "${data.aws_iam_policy_document.admin_task_execution.json}"
+  policy       = "${data.aws_iam_policy_document.celery_task_execution.json}"
 }
 
-data "aws_iam_policy_document" "admin_task_execution" {
+data "aws_iam_policy_document" "celery_task_execution" {
   statement {
     actions = [
       "logs:CreateLogStream",
@@ -318,24 +318,24 @@ data "aws_iam_policy_document" "admin_task_execution" {
     ]
 
     resources = [
-      "${aws_cloudwatch_log_group.admin.arn}",
+      "${aws_cloudwatch_log_group.celery.arn}",
     ]
   }
 }
 
-resource "aws_iam_role" "admin_dashboard_embedding" {
+resource "aws_iam_role" "celery_dashboard_embedding" {
   name = "${var.prefix}-quicksight-embedding"
   path = "/"
-  assume_role_policy = "${data.aws_iam_policy_document.admin_dashboard_embedding_assume_role.json}"
+  assume_role_policy = "${data.aws_iam_policy_document.celery_dashboard_embedding_assume_role.json}"
 }
 
-resource "aws_iam_policy" "admin_dashboard_embedding" {
+resource "aws_iam_policy" "celery_dashboard_embedding" {
   name        = "${var.prefix}-quicksight-dashboard-embedding"
   path        = "/"
-  policy       = "${data.aws_iam_policy_document.admin_dashboard_embedding.json}"
+  policy       = "${data.aws_iam_policy_document.celery_dashboard_embedding.json}"
 }
 
-data "aws_iam_policy_document" "admin_dashboard_embedding" {
+data "aws_iam_policy_document" "celery_dashboard_embedding" {
   statement {
     actions = ["quicksight:RegisterUser"]
     resources = ["*"]
@@ -358,40 +358,40 @@ data "aws_iam_policy_document" "admin_dashboard_embedding" {
   }
 }
 
-data "aws_iam_policy_document" "admin_dashboard_embedding_assume_role" {
+data "aws_iam_policy_document" "celery_dashboard_embedding_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
 
     principals {
       type = "AWS"
-      identifiers = ["${aws_iam_role.admin_task.arn}"]
+      identifiers = ["${aws_iam_role.celery_task.arn}"]
     }
   }
 }
 
-resource "aws_iam_role_policy_attachment" "admin_dashboard_embedding" {
-  role       = "${aws_iam_role.admin_dashboard_embedding.name}"
-  policy_arn = "${aws_iam_policy.admin_dashboard_embedding.arn}"
+resource "aws_iam_role_policy_attachment" "celery_dashboard_embedding" {
+  role       = "${aws_iam_role.celery_dashboard_embedding.name}"
+  policy_arn = "${aws_iam_policy.celery_dashboard_embedding.arn}"
 }
 
-resource "aws_iam_role" "admin_task" {
-  name               = "${var.prefix}-admin-task"
+resource "aws_iam_role" "celery_task" {
+  name               = "${var.prefix}-celery-task"
   path               = "/"
-  assume_role_policy = "${data.aws_iam_policy_document.admin_task_ecs_tasks_assume_role.json}"
+  assume_role_policy = "${data.aws_iam_policy_document.celery_task_ecs_tasks_assume_role.json}"
 }
 
-resource "aws_iam_role_policy_attachment" "admin_access_uploads_bucket" {
-  role       = "${aws_iam_role.admin_task.name}"
-  policy_arn = "${aws_iam_policy.admin_access_uploads_bucket.arn}"
+resource "aws_iam_role_policy_attachment" "celery_access_uploads_bucket" {
+  role       = "${aws_iam_role.celery_task.name}"
+  policy_arn = "${aws_iam_policy.celery_access_uploads_bucket.arn}"
 }
 
-resource "aws_iam_policy" "admin_access_uploads_bucket" {
-  name        = "${var.prefix}-admin-access-uploads-bucket"
+resource "aws_iam_policy" "celery_access_uploads_bucket" {
+  name        = "${var.prefix}-celery-access-uploads-bucket"
   path        = "/"
-  policy       = "${data.aws_iam_policy_document.admin_access_uploads_bucket.json}"
+  policy       = "${data.aws_iam_policy_document.celery_access_uploads_bucket.json}"
 }
 
-data "aws_iam_policy_document" "admin_access_uploads_bucket" {
+data "aws_iam_policy_document" "celery_access_uploads_bucket" {
   statement {
     actions = [
         "s3:PutObject",
@@ -415,18 +415,18 @@ data "aws_iam_policy_document" "admin_access_uploads_bucket" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "admin_run_tasks" {
-  role       = "${aws_iam_role.admin_task.name}"
-  policy_arn = "${aws_iam_policy.admin_run_tasks.arn}"
+resource "aws_iam_role_policy_attachment" "celery_run_tasks" {
+  role       = "${aws_iam_role.celery_task.name}"
+  policy_arn = "${aws_iam_policy.celery_run_tasks.arn}"
 }
 
-resource "aws_iam_policy" "admin_run_tasks" {
-  name        = "${var.prefix}-admin-run-tasks"
+resource "aws_iam_policy" "celery_run_tasks" {
+  name        = "${var.prefix}-celery-run-tasks"
   path        = "/"
-  policy       = "${data.aws_iam_policy_document.admin_run_tasks.json}"
+  policy       = "${data.aws_iam_policy_document.celery_run_tasks.json}"
 }
 
-data "aws_iam_policy_document" "admin_run_tasks" {
+data "aws_iam_policy_document" "celery_run_tasks" {
   statement {
     actions = [
       "ecs:RunTask",
@@ -601,20 +601,20 @@ data "aws_iam_policy_document" "admin_run_tasks" {
     ]
 
     resources = [
-      "${aws_iam_role.admin_dashboard_embedding.arn}"
+      "${aws_iam_role.celery_dashboard_embedding.arn}"
     ]
   }
 }
 
-resource "aws_iam_role_policy_attachment" "admin_celery_store_db_creds_in_s3_task" {
-  role       = "${aws_iam_role.admin_task.name}"
+resource "aws_iam_role_policy_attachment" "celery_celery_store_db_creds_in_s3_task" {
+  role       = "${aws_iam_role.celery_task.name}"
   policy_arn = "${aws_iam_policy.celery_store_db_creds_in_s3_task.arn}"
 }
 
 resource "aws_iam_role" "celery_store_db_creds_in_s3_task" {
-  name               = "${var.prefix}-admin-store-db-creds-in-s3-task"
+  name               = "${var.prefix}-celery-store-db-creds-in-s3-task"
   path               = "/"
-  assume_role_policy = "${data.aws_iam_policy_document.admin_task_ecs_tasks_assume_role.json}"
+  assume_role_policy = "${data.aws_iam_policy_document.celery_task_ecs_tasks_assume_role.json}"
 }
 
 resource "aws_iam_role_policy_attachment" "celery_store_db_creds_in_s3_task" {
@@ -623,7 +623,7 @@ resource "aws_iam_role_policy_attachment" "celery_store_db_creds_in_s3_task" {
 }
 
 resource "aws_iam_policy" "celery_store_db_creds_in_s3_task" {
-  name        = "${var.prefix}-admin-store-db-creds-in-s3-task"
+  name        = "${var.prefix}-celery-store-db-creds-in-s3-task"
   path        = "/"
   policy       = "${data.aws_iam_policy_document.celery_store_db_creds_in_s3_task.json}"
 }
@@ -642,7 +642,7 @@ data "aws_iam_policy_document" "celery_store_db_creds_in_s3_task" {
   }
 }
 
-data "aws_iam_policy_document" "admin_task_ecs_tasks_assume_role" {
+data "aws_iam_policy_document" "celery_task_ecs_tasks_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -653,14 +653,14 @@ data "aws_iam_policy_document" "admin_task_ecs_tasks_assume_role" {
   }
 }
 
-resource "aws_alb" "admin" {
-  name            = "${var.prefix}-admin"
+resource "aws_alb" "celery" {
+  name            = "${var.prefix}-celery"
   subnets         = ["${aws_subnet.public.*.id}"]
   security_groups = ["${aws_security_group.admin_alb.id}"]
 
   access_logs {
     bucket  = "${aws_s3_bucket.alb_access_logs.id}"
-    prefix  = "admin"
+    prefix  = "celery"
     enabled = true
   }
 
@@ -669,13 +669,13 @@ resource "aws_alb" "admin" {
   ]
 }
 
-resource "aws_alb_listener" "admin" {
-  load_balancer_arn = "${aws_alb.admin.arn}"
-  port              = "${local.admin_alb_port}"
+resource "aws_alb_listener" "celery" {
+  load_balancer_arn = "${aws_alb.celery.arn}"
+  port              = "${local.celery_alb_port}"
   protocol          = "HTTPS"
 
   default_action {
-    target_group_arn = "${aws_alb_target_group.admin.arn}"
+    target_group_arn = "${aws_alb_target_group.celery.arn}"
     type             = "forward"
   }
 
@@ -683,20 +683,20 @@ resource "aws_alb_listener" "admin" {
   certificate_arn = "${aws_acm_certificate_validation.admin.certificate_arn}"
 }
 
-resource "aws_alb_listener" "admin_http" {
-  load_balancer_arn = "${aws_alb.admin.arn}"
+resource "aws_alb_listener" "celery_http" {
+  load_balancer_arn = "${aws_alb.celery.arn}"
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = "${aws_alb_target_group.admin.arn}"
+    target_group_arn = "${aws_alb_target_group.celery.arn}"
     type             = "forward"
   }
 }
 
-resource "aws_alb_target_group" "admin" {
+resource "aws_alb_target_group" "celery" {
   name_prefix = "jhadm-"
-  port        = "${local.admin_container_port}"
+  port        = "${local.celery_container_port}"
   protocol    = "HTTP"
   vpc_id      = "${aws_vpc.main.id}"
   target_type = "ip"
@@ -713,19 +713,19 @@ resource "aws_alb_target_group" "admin" {
   }
 }
 
-resource "aws_elasticache_cluster" "admin" {
-  cluster_id           = "${var.prefix_short}-admin"
+resource "aws_elasticache_cluster" "celery" {
+  cluster_id           = "${var.prefix_short}-celery"
   engine               = "redis"
   node_type            = "cache.t2.micro"
   num_cache_nodes      = 1
   parameter_group_name = "default.redis5.0"
   engine_version       = "5.0.3"
   port                 = 6379
-  subnet_group_name    = "${aws_elasticache_subnet_group.admin.name}"
+  subnet_group_name    = "${aws_elasticache_subnet_group.celery.name}"
   security_group_ids   = ["${aws_security_group.admin_redis.id}"]
 }
 
-resource "aws_elasticache_subnet_group" "admin" {
-  name               = "${var.prefix_short}-admin"
+resource "aws_elasticache_subnet_group" "celery" {
+  name               = "${var.prefix_short}-celery"
   subnet_ids         = ["${aws_subnet.private_with_egress.*.id}"]
 }
