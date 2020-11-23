@@ -13,7 +13,7 @@ resource "aws_ecs_service" "celery" {
 
   load_balancer {
     target_group_arn = "${aws_alb_target_group.celery.arn}"
-    container_port   = "${local.celery_container_port}"
+    container_port   = "${local.admin_container_port}"
     container_name   = "${local.celery_container_name}"
   }
 
@@ -671,7 +671,7 @@ resource "aws_alb" "celery" {
 
 resource "aws_alb_listener" "celery" {
   load_balancer_arn = "${aws_alb.celery.arn}"
-  port              = "${local.celery_alb_port}"
+  port              = "${local.admin_alb_port}"
   protocol          = "HTTPS"
 
   default_action {
@@ -696,7 +696,7 @@ resource "aws_alb_listener" "celery_http" {
 
 resource "aws_alb_target_group" "celery" {
   name_prefix = "jhadm-"
-  port        = "${local.celery_container_port}"
+  port        = "${local.admin_container_port}"
   protocol    = "HTTP"
   vpc_id      = "${aws_vpc.main.id}"
   target_type = "ip"
