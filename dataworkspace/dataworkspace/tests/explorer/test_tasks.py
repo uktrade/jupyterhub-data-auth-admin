@@ -1,3 +1,4 @@
+from mock import call, Mock, MagicMock, patch
 from datetime import datetime, timedelta
 
 from django.test import TestCase
@@ -7,8 +8,13 @@ from dataworkspace.apps.explorer.models import QueryLog, PlaygroundSQL
 from dataworkspace.apps.explorer.tasks import (
     truncate_querylogs,
     cleanup_playground_sql_table,
+    cleanup_materialized_views,
 )
-from dataworkspace.tests.explorer.factories import PlaygroundSQLFactory
+from dataworkspace.tests.explorer.factories import (
+    PlaygroundSQLFactory,
+    SimpleQueryFactory,
+)
+from dataworkspace.tests.factories import UserFactory
 
 
 class TestTasks(TestCase):
@@ -32,3 +38,34 @@ class TestTasks(TestCase):
         cleanup_playground_sql_table()
 
         assert PlaygroundSQL.objects.count() == 1
+
+    @patch('dataworkspace.apps.explorer.tasks.connections')
+    def test_cleanup_materialized_views(self, mock_connections):
+        mock_cursor = Mock()
+        mock_connection = Mock()
+        mock_cursor_ctx_manager = MagicMock()
+
+        mock_cursor_ctx_manager.__enter__.return_value = mock_cursor
+        mock_connection.cursor.return_value = mock_cursor_ctx_manager
+        mock_connections.__getitem__.return_value = mock_connection
+
+        user = UserFactory()
+        user.profile.sso_id = '00000000-0000-0000-0000-000000000000'  # yields a short hexdigest of 12b9377c
+        user.profile.save()
+
+        # last run 1 day and 1 hour ago so its materialized view should be deleted
+        with freeze_time(datetime.utcnow() - timedelta(days=1, hours=1)):
+            query_1 = SimpleQueryFactory(created_by_user=user)
+
+        # last run 2 hours ago so its materialized view should be kept
+        with freeze_time(datetime.utcnow() - timedelta(hours=2)):
+            SimpleQueryFactory(created_by_user=user)
+
+        cleanup_materialized_views()
+
+        expected_calls = [
+            call(
+                f'DROP MATERIALIZED VIEW IF EXISTS _user_12b9377c.query_{query_1.id}_mview'
+            ),
+        ]
+        mock_cursor.execute.assert_has_calls(expected_calls)

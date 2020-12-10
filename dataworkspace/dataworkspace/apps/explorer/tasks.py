@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 
 from celery.utils.log import get_task_logger
+from django.db import connections
 from pytz import utc
 
-from dataworkspace.apps.explorer.models import QueryLog, PlaygroundSQL
+from dataworkspace.apps.explorer.models import Query, QueryLog, PlaygroundSQL
+from dataworkspace.apps.explorer.utils import materialized_view_name_for_query
 from dataworkspace.cel import celery_app
 
 
@@ -34,3 +36,17 @@ def cleanup_playground_sql_table():
         count += 1
 
     logger.info("Delete %s PlaygroundSQL rows", count)
+
+
+@celery_app.task()
+def cleanup_materialized_views():
+    one_day_ago = datetime.utcnow() - timedelta(days=1)
+    logger.info(
+        "Cleaning up Data Explorer materialized views older than %s", one_day_ago
+    )
+
+    for query in Query.objects.filter(last_run_date__lte=one_day_ago):
+        with connections[query.connection].cursor() as cursor:
+            view_name = materialized_view_name_for_query(query.created_by_user, query)
+            logger.info("Dropping view %s", view_name)
+            cursor.execute(f'DROP MATERIALIZED VIEW IF EXISTS {view_name}')

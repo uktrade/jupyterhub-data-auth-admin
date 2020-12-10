@@ -23,6 +23,7 @@ from dataworkspace.apps.explorer.utils import (
     QueryResult,
 )
 from dataworkspace.tests.explorer.factories import SimpleQueryFactory
+from dataworkspace.tests.factories import UserFactory
 
 
 class TestGetTotalPages(TestCase):
@@ -69,7 +70,7 @@ class TestQueryResults:
 
 class TestExecuteQuery:
     @pytest.fixture(scope='function', autouse=True)
-    def create_mock_cursor(self):
+    def setUp(self):
         user_explorer_connection_patcher = patch(
             'dataworkspace.apps.explorer.utils.user_explorer_connection'
         )
@@ -81,25 +82,35 @@ class TestExecuteQuery:
         mock_user_explorer_connection.return_value.__enter__.return_value = (
             mock_connection
         )
-
+        self.user = UserFactory()
+        self.user.profile.sso_id = '00000000-0000-0000-0000-000000000000'  # yields a short hexdigest of 12b9377c
         yield
         user_explorer_connection_patcher.stop()
+        self.user.delete()
 
     @patch('dataworkspace.apps.explorer.utils.uuid')
     @patch('dataworkspace.apps.explorer.utils.get_user_explorer_connection_settings')
     def test_execute_query(self, mock_connection_settings, mock_uuid):
         mock_uuid.uuid4.return_value = '00000000-0000-0000-0000-000000000000'
 
-        query = SimpleQueryFactory(sql='select * from foo', connection='conn')
+        query = SimpleQueryFactory(sql='select * from foo', connection='conn', id=1)
 
-        execute_query(query, None, 1, 100, 10000, log_query=False)
+        execute_query(query, self.user, 1, 100, 10000, log_query=False)
 
         expected_calls = [
             call('SET statement_timeout = 10000'),
-            call('DECLARE cur_0000000000 CURSOR WITH HOLD FOR select * from foo'),
+            call(f'DROP MATERIALIZED VIEW IF EXISTS _user_12b9377c.query_1_mview'),
+            call(
+                f'CREATE MATERIALIZED VIEW _user_12b9377c.query_1_mview AS select * from foo'
+            ),
+            call(
+                f'DECLARE cur_0000000000 CURSOR WITH HOLD FOR SELECT * FROM _user_12b9377c.query_1_mview'
+            ),
             call('FETCH 100 FROM cur_0000000000'),
             call('CLOSE cur_0000000000'),
-            call('select count(*) from (select * from foo) t'),
+            call(
+                f'SELECT COUNT(*) FROM (SELECT * FROM _user_12b9377c.query_1_mview) t'
+            ),
         ]
         self.mock_cursor.execute.assert_has_calls(expected_calls)
 
@@ -108,17 +119,25 @@ class TestExecuteQuery:
     def test_execute_query_with_page(self, mock_connection_settings, mock_uuid):
         mock_uuid.uuid4.return_value = '00000000-0000-0000-0000-000000000000'
 
-        query = SimpleQueryFactory(sql='select * from foo', connection='conn')
+        query = SimpleQueryFactory(sql='select * from foo', connection='conn', id=1)
 
-        execute_query(query, None, 2, 100, 10000, log_query=False)
+        execute_query(query, self.user, 2, 100, 10000, log_query=False)
 
         expected_calls = [
             call("SET statement_timeout = 10000"),
-            call("DECLARE cur_0000000000 CURSOR WITH HOLD FOR select * from foo"),
-            call('MOVE 100 FROM cur_0000000000'),
-            call("FETCH 100 FROM cur_0000000000"),
-            call('CLOSE cur_0000000000'),
-            call('select count(*) from (select * from foo) t'),
+            call(f'DROP MATERIALIZED VIEW IF EXISTS _user_12b9377c.query_1_mview'),
+            call(
+                f'CREATE MATERIALIZED VIEW _user_12b9377c.query_1_mview AS select * from foo'
+            ),
+            call(
+                f'DECLARE cur_0000000000 CURSOR WITH HOLD FOR SELECT * FROM _user_12b9377c.query_1_mview'
+            ),
+            call(f'MOVE 100 FROM cur_0000000000'),
+            call(f'FETCH 100 FROM cur_0000000000'),
+            call(f'CLOSE cur_0000000000'),
+            call(
+                f'SELECT COUNT(*) FROM (SELECT * FROM _user_12b9377c.query_1_mview) t'
+            ),
         ]
 
         self.mock_cursor.execute.assert_has_calls(expected_calls)
@@ -127,11 +146,11 @@ class TestExecuteQuery:
     def test_execute_query_with_logging(self, mock_connection_settings):
         query = SimpleQueryFactory(sql='select * from foo', connection='conn')
 
-        result = execute_query(query, None, 1, 100, 10000, log_query=True)
+        result = execute_query(query, self.user, 1, 100, 10000, log_query=True)
         assert QueryLog.objects.count() == 1
         log = QueryLog.objects.first()
 
-        assert log.run_by_user is None
+        assert log.run_by_user == self.user
         assert log.query == query
         assert log.is_playground is False
         assert log.connection == query.connection
@@ -143,14 +162,14 @@ class TestExecuteQuery:
         )
 
         with pytest.raises(InvalidExplorerConnectionException):
-            execute_query(query, None, 1, 100, 10000, log_query=False)
+            execute_query(query, self.user, 1, 100, 10000, log_query=False)
 
     @patch('dataworkspace.apps.explorer.utils.get_user_explorer_connection_settings')
     def test_writing_csv_unicode(self, mock_connection_settings):
         self.mock_cursor.__iter__.return_value = [(1, None), (u'Jenét', '1')]
         self.mock_cursor.description = [('a',), ('b',)]
 
-        res = CSVExporter(user=None, query=SimpleQueryFactory()).get_output()
+        res = CSVExporter(user=self.user, query=SimpleQueryFactory()).get_output()
         assert res == 'a,b\r\n1,\r\nJenét,1\r\n'
 
     @patch('dataworkspace.apps.explorer.utils.get_user_explorer_connection_settings')
@@ -158,7 +177,9 @@ class TestExecuteQuery:
         self.mock_cursor.__iter__.return_value = [(1, 2)]
         self.mock_cursor.description = [('?column?',), ('?column?',)]
 
-        res = CSVExporter(user=None, query=SimpleQueryFactory()).get_output(delim='|')
+        res = CSVExporter(user=self.user, query=SimpleQueryFactory()).get_output(
+            delim='|'
+        )
         assert res == '?column?|?column?\r\n1|2\r\n'
 
     @patch('dataworkspace.apps.explorer.utils.get_user_explorer_connection_settings')
@@ -166,7 +187,7 @@ class TestExecuteQuery:
         self.mock_cursor.__iter__.return_value = [(1, None), (u'Jenét', '1')]
         self.mock_cursor.description = [('a',), ('b',)]
 
-        res = JSONExporter(user=None, query=SimpleQueryFactory()).get_output()
+        res = JSONExporter(user=self.user, query=SimpleQueryFactory()).get_output()
         assert res == json.dumps([{'a': 1, 'b': None}, {'a': 'Jenét', 'b': '1'}])
 
     @patch('dataworkspace.apps.explorer.utils.get_user_explorer_connection_settings')
@@ -174,14 +195,14 @@ class TestExecuteQuery:
         self.mock_cursor.__iter__.return_value = [(1, date.today())]
         self.mock_cursor.description = [('a',), ('b',)]
 
-        res = JSONExporter(user=None, query=SimpleQueryFactory()).get_output()
+        res = JSONExporter(user=self.user, query=SimpleQueryFactory()).get_output()
         assert res == json.dumps([{'a': 1, 'b': date.today()}], cls=DjangoJSONEncoder)
 
     @patch('dataworkspace.apps.explorer.utils.get_user_explorer_connection_settings')
     def test_writing_excel(self, mock_connection_settings):
         self.mock_cursor.__iter__.return_value = [(1, None), (u'Jenét', datetime.now())]
 
-        res = ExcelExporter(user=None, query=SimpleQueryFactory()).get_output()
+        res = ExcelExporter(user=self.user, query=SimpleQueryFactory()).get_output()
         assert res[:2] == six.b('PK')
 
     @patch('dataworkspace.apps.explorer.utils.get_user_explorer_connection_settings')
@@ -191,5 +212,5 @@ class TestExecuteQuery:
             (2, {'foo': 'bar'}),
         ]
 
-        res = ExcelExporter(user=None, query=SimpleQueryFactory()).get_output()
+        res = ExcelExporter(user=self.user, query=SimpleQueryFactory()).get_output()
         assert res[:2] == six.b('PK')

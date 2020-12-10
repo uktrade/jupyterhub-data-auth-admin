@@ -21,6 +21,7 @@ from dataworkspace.apps.core.utils import (
     source_tables_for_user,
     db_role_schema_suffix_for_user,
     postgres_user,
+    USER_SCHEMA_STEM,
 )
 from dataworkspace.apps.explorer.models import QueryLog
 
@@ -250,6 +251,11 @@ class ColumnHeader:
         return self.title
 
 
+def materialized_view_name_for_query(user, query):
+    schema_name = f'{USER_SCHEMA_STEM}{db_role_schema_suffix_for_user(user)}'
+    return f'{schema_name}.query_{query.id}_mview'
+
+
 def execute_query(query, user, page, limit, timeout, log_query):
     user_connection_settings = get_user_explorer_connection_settings(
         user, query.connection
@@ -259,10 +265,17 @@ def execute_query(query, user, page, limit, timeout, log_query):
         cursor_name = 'cur_%s' % str(uuid.uuid4()).replace('-', '')[:10]
 
         start_time = time()
+        sql = query.final_sql().rstrip().rstrip(';')
+
+        materialized_view_name = materialized_view_name_for_query(user, query)
         try:
             cursor.execute(f'SET statement_timeout = {timeout}')
+            cursor.execute(f'DROP MATERIALIZED VIEW IF EXISTS {materialized_view_name}')
             cursor.execute(
-                f'DECLARE {cursor_name} CURSOR WITH HOLD FOR {query.final_sql()}'
+                f'CREATE MATERIALIZED VIEW {materialized_view_name} AS {sql}'
+            )
+            cursor.execute(
+                f'DECLARE {cursor_name} CURSOR WITH HOLD FOR SELECT * FROM {materialized_view_name}'
             )
             if page and page > 1:
                 offset = (page - 1) * limit
@@ -276,8 +289,9 @@ def execute_query(query, user, page, limit, timeout, log_query):
         data = [list(r) for r in cursor]
         cursor.execute(f'CLOSE {cursor_name}')
 
-        sql = query.final_sql().rstrip().rstrip(';')
-        cursor.execute(f'select count(*) from ({sql}) t')
+        cursor.execute(
+            f'SELECT COUNT(*) FROM (SELECT * FROM {materialized_view_name}) t'
+        )
         row_count = cursor.fetchone()[0]
 
     if log_query:

@@ -281,6 +281,11 @@ if not strtobool(env.get('DISABLE_CELERY_BEAT_SCHEDULE', '0')):
             'schedule': 60 * 60 * 6,
             'args': (),
         },
+        'clean-up-old-data-explorer-materialized-views': {
+            'task': 'dataworkspace.apps.explorer.tasks.cleanup_materialized_views',
+            'schedule': crontab(hour=0),
+            'args': (),
+        },
         'sync-sso-users-from-activity-stream': {
             'task': 'dataworkspace.apps.applications.utils.sync_activity_stream_sso_users',
             'schedule': 60,
