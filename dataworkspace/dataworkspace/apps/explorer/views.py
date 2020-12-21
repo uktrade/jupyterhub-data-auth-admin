@@ -43,16 +43,16 @@ class SafeLoginView(LoginView):
     template_name = 'admin/login.html'
 
 
-def _export(request, query, download=True):
+def _export(request, querylog, download=True):
     format_ = request.GET.get('format', 'csv')
     exporter_class = get_exporter_class(format_)
-    query.params = url_get_params(request)
+    # query.params = url_get_params(request)
     delim = request.GET.get('delim')
-    exporter = exporter_class(query=query, user=request.user)
+    exporter = exporter_class(querylog=querylog, user=request.user)
     try:
         output = exporter.get_output(delim=delim)
     except DatabaseError as e:
-        msg = "Error executing query %s: %s" % (query.title, e)
+        msg = "Error executing query %s: %s" % (querylog.query.title, e)
         return HttpResponse(msg, status=500)
     response = HttpResponse(output, content_type=exporter.content_type)
     if download:
@@ -68,14 +68,14 @@ class DownloadFromQuerylogView(View):
             QueryLog, pk=querylog_id, run_by_user=self.request.user
         )
 
-        query = Query(
-            sql=querylog.sql,
-            connection=querylog.connection,
-            title=querylog.query.title
-            if querylog.query
-            else f'Playground - {querylog.sql[:32]}',
-        )
-        return _export(request, query)
+        # query = Query(
+        #     sql=querylog.sql,
+        #     connection=querylog.connection,
+        #     title=querylog.query.title
+        #     if querylog.query
+        #     else f'Playground - {querylog.sql[:32]}',
+        # )
+        return _export(request, querylog)
 
 
 class ListQueryView(ListView):

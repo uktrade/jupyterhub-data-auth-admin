@@ -10,7 +10,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.module_loading import import_string
 from django.utils.text import slugify
 
-from dataworkspace.apps.explorer.tasks import execute_query
+from dataworkspace.apps.explorer.models import QueryLog
+# from dataworkspace.apps.explorer.tasks import execute_query
 from dataworkspace.apps.explorer.utils import fetch_query_results
 
 
@@ -24,25 +25,25 @@ class BaseExporter:
     content_type = ''
     file_extension = ''
 
-    def __init__(self, query, user):
-        self.query = query
+    def __init__(self, querylog, user):
         self.user = user
+        self.querylog = QueryLog.objects.get(id=querylog.id)
 
     def get_output(self, **kwargs):
         value = self.get_file_output(**kwargs).getvalue()
         return value
 
     def get_file_output(self, **kwargs):
-        query_log_id = execute_query.delay(
-            self.query.final_sql(),
-            self.query.connection,
-            self.query.id,
-            self.user.id,
-            1,
-            settings.EXPLORER_DEFAULT_DOWNLOAD_ROWS,
-            settings.EXPLORER_QUERY_TIMEOUT_MS,
-        ).get()
-        headers, data, _ = fetch_query_results(query_log_id)
+        # query_log_id = execute_query.delay(
+        #     self.query.final_sql(),
+        #     self.query.connection,
+        #     self.query.id,
+        #     self.user.id,
+        #     1,
+        #     settings.EXPLORER_DEFAULT_DOWNLOAD_ROWS,
+        #     settings.EXPLORER_QUERY_TIMEOUT_MS,
+        # ).get()
+        headers, data, _ = fetch_query_results(self.querylog.id)
         return self._get_output(headers, data, **kwargs)
 
     def _get_output(self, headers, data, **kwargs):
@@ -57,7 +58,7 @@ class BaseExporter:
     def get_filename(self):
         # build list of valid chars, build filename from title and replace spaces
         valid_chars = '-_.() %s%s' % (string.ascii_letters, string.digits)
-        filename = ''.join(c for c in self.query.title if c in valid_chars)
+        filename = ''.join(c for c in self.querylog.query.title if c in valid_chars)
         filename = filename.replace(' ', '_')
         return '{}{}'.format(filename, self.file_extension)
 
@@ -144,5 +145,5 @@ class ExcelExporter(BaseExporter):
     def _format_title(self):
         # XLSX writer wont allow sheet names > 31 characters or that contain invalid characters
         # https://github.com/jmcnamara/XlsxWriter/blob/master/xlsxwriter/test/workbook/test_check_sheetname.py
-        title = slugify(self.query.title)
+        title = slugify(self.querylog.query.title)
         return title[:31]
