@@ -13,10 +13,14 @@ from botocore.exceptions import ClientError
 import gevent
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django_db_geventpool.utils import close_connection
 
 from dataworkspace.cel import celery_app
-from dataworkspace.apps.applications.models import ApplicationInstance
+from dataworkspace.apps.applications.models import (
+    ApplicationInstance,
+    ApplicationInstanceDbUsers,
+)
 from dataworkspace.apps.applications.gitlab import (
     ECR_PROJECT_ID,
     SUCCESS_PIPELINE_STATUSES,
@@ -27,6 +31,13 @@ from dataworkspace.apps.applications.gitlab import (
 from dataworkspace.apps.core.utils import (
     create_tools_access_iam_role,
     stable_identification_suffix,
+    source_tables_for_user,
+    db_role_schema_suffix_for_user,
+    postgres_user,
+    source_tables_for_app,
+    db_role_schema_suffix_for_app,
+    new_private_database_credentials,
+    write_credentials_to_bucket,
 )
 
 logger = logging.getLogger('app')
@@ -39,25 +50,10 @@ def get_spawner(name):
 @celery_app.task()
 @close_connection
 def spawn(
-    name,
-    user_email_address,
-    user_sso_id,
-    user_efs_access_point_id,
-    tag,
-    application_instance_id,
-    spawner_options,
-    db_credentials,
-    app_schema,
+    name, user_id, tag, application_instance_id, spawner_options, app_schema,
 ):
     get_spawner(name).spawn(
-        user_email_address,
-        user_sso_id,
-        user_efs_access_point_id,
-        tag,
-        application_instance_id,
-        spawner_options,
-        db_credentials,
-        app_schema,
+        user_id, tag, application_instance_id, spawner_options, app_schema,
     )
 
 
@@ -76,17 +72,55 @@ class ProcessSpawner:
 
     @staticmethod
     def spawn(
-        _,
-        __,
-        ___,
-        ____,
-        application_instance_id,
-        spawner_options,
-        db_credentials,
-        _____,
+        user_id, __, application_instance_id, spawner_options, ___,
     ):
 
         try:
+            # -----------------------------
+            application_instance = ApplicationInstance.objects.get(
+                id=application_instance_id
+            )
+            user = get_user_model().objects.get(user_id)
+            (source_tables, db_role_schema_suffix, db_user) = (
+                (
+                    source_tables_for_user(user),
+                    db_role_schema_suffix_for_user(user),
+                    postgres_user(user.email),
+                )
+                if application_instance.application_template.application_type == 'TOOL'
+                else (
+                    source_tables_for_app(application_instance.application_template),
+                    db_role_schema_suffix_for_app(
+                        application_instance.application_template
+                    ),
+                    postgres_user(
+                        application_instance.application_template.host_basename
+                    ),
+                )
+            )
+
+            credentials = new_private_database_credentials(
+                db_role_schema_suffix,
+                source_tables,
+                db_user,
+                user,
+                valid_for=datetime.timedelta(days=31),
+            )
+
+            if application_instance.application_template.application_type == 'TOOL':
+                # For AppStream to access credentials
+                write_credentials_to_bucket(user, credentials)
+
+            # The database users are stored so when the database users are cleaned up,
+            # we know _not_ to delete any users used by running or spawning apps
+            for creds in credentials:
+                ApplicationInstanceDbUsers.objects.create(
+                    application_instance=application_instance,
+                    db_id=creds['db_id'],
+                    db_username=creds['db_user'],
+                )
+            # ----------------------------
+
             gevent.sleep(1)
             cmd = json.loads(spawner_options)['CMD']
 
@@ -94,15 +128,12 @@ class ProcessSpawner:
                 f'DATABASE_DSN__{database["memorable_name"]}': f'host={database["db_host"]} '
                 f'port={database["db_port"]} sslmode=require dbname={database["db_name"]} '
                 f'user={database["db_user"]} password={database["db_password"]}'
-                for database in db_credentials
+                for database in credentials
             }
 
             logger.info('Starting %s', cmd)
             proc = subprocess.Popen(cmd, cwd='/home/django', env=database_env)
 
-            application_instance = ApplicationInstance.objects.get(
-                id=application_instance_id
-            )
             application_instance.spawner_application_instance_id = json.dumps(
                 {'process_id': proc.pid}
             )
@@ -178,17 +209,55 @@ class FargateSpawner:
 
     @staticmethod
     def spawn(
-        user_email_address,
-        user_sso_id,
-        user_efs_access_point_id,
-        tag,
-        application_instance_id,
-        spawner_options,
-        db_credentials,
-        app_schema,
+        user_id, tag, application_instance_id, spawner_options, app_schema,
     ):
 
         try:
+            # -----------------------------
+            application_instance = ApplicationInstance.objects.get(
+                id=application_instance_id
+            )
+            user = get_user_model().objects.get(user_id)
+            (source_tables, db_role_schema_suffix, db_user) = (
+                (
+                    source_tables_for_user(user),
+                    db_role_schema_suffix_for_user(user),
+                    postgres_user(user.email),
+                )
+                if application_instance.application_template.application_type == 'TOOL'
+                else (
+                    source_tables_for_app(application_instance.application_template),
+                    db_role_schema_suffix_for_app(
+                        application_instance.application_template
+                    ),
+                    postgres_user(
+                        application_instance.application_template.host_basename
+                    ),
+                )
+            )
+
+            credentials = new_private_database_credentials(
+                db_role_schema_suffix,
+                source_tables,
+                db_user,
+                user,
+                valid_for=datetime.timedelta(days=31),
+            )
+
+            if application_instance.application_template.application_type == 'TOOL':
+                # For AppStream to access credentials
+                write_credentials_to_bucket(user, credentials)
+
+            # The database users are stored so when the database users are cleaned up,
+            # we know _not_ to delete any users used by running or spawning apps
+            for creds in credentials:
+                ApplicationInstanceDbUsers.objects.create(
+                    application_instance=application_instance,
+                    db_id=creds['db_id'],
+                    db_username=creds['db_user'],
+                )
+            # ----------------------------
+
             pipeline_id = None
             task_arn = None
             options = json.loads(spawner_options)
@@ -214,15 +283,21 @@ class FargateSpawner:
                 f'DATABASE_DSN__{database["memorable_name"]}': f'host={database["db_host"]} '
                 f'port={database["db_port"]} sslmode=require dbname={database["db_name"]} '
                 f'user={database["db_user"]} password={database["db_password"]}'
-                for database in db_credentials
+                for database in credentials
             }
 
             schema_env = {'APP_SCHEMA': app_schema}
 
+            user_efs_access_point_id = (
+                user.profile.home_directory_efs_access_point_id
+                if application_instance.application_template.application_type == 'TOOL'
+                else None
+            )
+
             logger.info('Starting %s', cmd)
 
             role_arn, s3_prefix = create_tools_access_iam_role(
-                user_email_address, user_sso_id, user_efs_access_point_id
+                user.email_address, user.profile.sso_id, user_efs_access_point_id
             )
 
             s3_env = {
@@ -231,10 +306,6 @@ class FargateSpawner:
                 'S3_HOST': s3_host,
                 'S3_BUCKET': s3_bucket,
             }
-
-            application_instance = ApplicationInstance.objects.get(
-                id=application_instance_id
-            )
 
             # Build tag if we can and it doesn't already exist
             if (
@@ -279,7 +350,9 @@ class FargateSpawner:
 
             # It doesn't really matter what the suffix is: it could even be a random
             # number, but we choose the short hashed version of the SSO ID to help debugging
-            task_family_suffix = stable_identification_suffix(user_sso_id, short=True)
+            task_family_suffix = stable_identification_suffix(
+                user.profile.sso_id, short=True
+            )
             definition_arn_with_image = _fargate_new_task_definition(
                 role_arn,
                 definition_arn,

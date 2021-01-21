@@ -402,6 +402,7 @@ async def async_main():
                 'x-data-workspace-no-modify-application-instance'
                 not in downstream_request.headers
             ):
+                print(host_api_url)
                 async with client_session.request(
                     'PUT',
                     host_api_url,
