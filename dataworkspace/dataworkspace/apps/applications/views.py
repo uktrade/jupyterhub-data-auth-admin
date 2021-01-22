@@ -7,7 +7,7 @@ import random
 import re
 from contextlib import closing
 from io import StringIO
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlencode
 
 from csp.decorators import csp_exempt, csp_update
 from django.conf import settings
@@ -245,9 +245,12 @@ def _get_embedded_quicksight_dashboard(request, dashboard_id, catalogue_item):
     dashboard_name, dashboard_url = get_quicksight_dashboard_name_url(
         dashboard_id, request.user
     )
+    extra_params = urlencode(
+        [("punyCodeEmbedOrigin", f"{request.scheme}://{request.get_host()}/")]
+    )
 
     context = {
-        'visualisation_src': dashboard_url,
+        'visualisation_src': f'{dashboard_url}&{extra_params}',
         'nice_name': dashboard_name,
         'wrap': 'IFRAME_WITH_VISUALISATIONS_HEADER',
         'catalogue_item': catalogue_item,
