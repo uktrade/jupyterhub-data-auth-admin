@@ -257,7 +257,7 @@ def _get_embedded_quicksight_dashboard(request, dashboard_id, catalogue_item):
         'catalogue_item': catalogue_item,
     }
 
-    return render(request, 'running.html', context, status=200)
+    return render(request, 'quicksight_running.html', context, status=200)
 
 
 @require_GET
