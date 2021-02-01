@@ -300,7 +300,7 @@ pyjwt==1.7.1
     # via
     #   -r requirements.txt
     #   notifications-python-client
-pylint-django==2.3.0
+pylint-django==2.4.2
     # via -r requirements-dev.in
 pylint-plugin-utils==0.6
     # via pylint-django
