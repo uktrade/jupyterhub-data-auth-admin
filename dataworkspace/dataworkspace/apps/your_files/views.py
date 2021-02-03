@@ -79,10 +79,7 @@ class CreateTableView(WaffleFlagMixin, FormView):
         column_definitions = get_s3_csv_column_types(path)
         import_path = settings.DATAFLOW_IMPORTS_BUCKET_ROOT + '/' + path
         copy_file_to_uploads_bucket(path, import_path)
-        try:
-            trigger_dataflow_dag(import_path, schema, table_name, column_definitions)
-        except HTTPError:
-            return self.form_invalid(form)
+        trigger_dataflow_dag(import_path, schema, table_name, column_definitions)
         messages.success(self.request, 'Table created')
         return HttpResponseRedirect(reverse('your-files:files'))
 
