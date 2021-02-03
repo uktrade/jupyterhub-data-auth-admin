@@ -84,5 +84,6 @@ class CreateTableView(WaffleFlagMixin, FormView):
         return HttpResponseRedirect(reverse('your-files:files'))
 
     def form_invalid(self, form):
+        raise Exception(form.errors)
         messages.error(self.request, 'An error occurred while processing your file')
         return HttpResponseRedirect(reverse('your-files:files'))
