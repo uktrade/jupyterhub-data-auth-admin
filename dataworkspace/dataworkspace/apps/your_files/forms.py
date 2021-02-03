@@ -26,9 +26,6 @@ class CreateTableForm(forms.Form):
                 'Invalid file type. Only CSV files are currently supported'
             )
 
-        try:
-            client.head_object(Bucket=settings.NOTEBOOKS_BUCKET, Key=path)
-        except ClientError:
-            raise ValidationError('This file does not exist in S3')
+        client.head_object(Bucket=settings.NOTEBOOKS_BUCKET, Key=path)
 
         return path
