@@ -141,6 +141,16 @@ ROOT_URLCONF = 'dataworkspace.urls'
 
 TEMPLATES = [
     {
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'DIRS': [
+            os.path.join(BASE_DIR, 'dataworkspace/dataworkspace/apps/explorer/templates/explorer'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'environment': 'dataworkspace.jinja2.environment',
+        },
+    },
+    {
         'NAME': 'MainTemplates',
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
