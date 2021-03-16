@@ -63,17 +63,17 @@ class ElasticsearchClient:
             size=0,
         )
 
-        if resp['hits']['total']['value'] == 0:
-            results = []
-        else:
-            results = [
-                _TableMatchResult(
-                    schema=r["key"].split("--")[1],
-                    table=r["key"].split("--")[2],
-                    count=r["doc_count"],
+        results = []
+
+        if resp['hits']['total']['value'] > 0:
+            for r in resp["aggregations"]["indexes"]["buckets"]:
+                # The Elasticsearch index names have a structured format:
+                # {timestamp}--{schema}--{table}--{arbitrary_number}
+                _, schema, table, _ = r['key'].split()
+                results.append(
+                    _TableMatchResult(schema=schema, table=table, count=r["doc_count"])
                 )
-                for r in resp["aggregations"]["indexes"]["buckets"]
-            ]
+
         return sorted(results, key=lambda x: -x.count)
 
 

@@ -46,7 +46,7 @@
             <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
             
             <h2 class="govuk-heading-m">
-              <a class="govuk-link" href="{% url 'datasets:dataset_detail' %}#{{ result.slug }}" target="_blank">
+              <a class="govuk-link" href="{% url 'datasets:dataset_detail' dataset_uuid=result.id %}#{{ result.slug }}" target="_blank">
                 {{ result.name }}
               </a>
             </h2>
