@@ -1,7 +1,7 @@
 from urllib.parse import quote
 
 from django.conf import settings
-from django.db import connection
+from django.db import connections
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -44,7 +44,7 @@ def find_datasets(request):
 def search_in_data_explorer(request, schema, table):
     q = request.GET.get("q")
 
-    with connection.cursor() as cursor:
+    with connections[settings.DATASET_FINDER_DB_NAME].cursor() as cursor:
         cursor.execute(
             """
             SELECT attname AS column, atttypid::regtype AS datatype
@@ -57,9 +57,8 @@ def search_in_data_explorer(request, schema, table):
             [f'"{schema}"."{table}"'],
         )
 
-        results = cursor.fetchall()
         tsvector_fragments = []
-        for column, datatype in results:
+        for column, datatype in cursor.fetchall():
             if datatype in ('text[]', 'character varying[]'):
                 tsvector_fragments.append(f"array_to_string(\"{column}\", ', ')")
             elif datatype == "json":
