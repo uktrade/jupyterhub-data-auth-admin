@@ -69,7 +69,7 @@ class ElasticsearchClient:
             for r in resp["aggregations"]["indexes"]["buckets"]:
                 # The Elasticsearch index names have a structured format:
                 # {timestamp}--{schema}--{table}--{arbitrary_number}
-                _, schema, table, _ = r['key'].split()
+                _, schema, table, _ = r['key'].split('--')
                 results.append(
                     _TableMatchResult(schema=schema, table=table, count=r["doc_count"])
                 )
