@@ -72,3 +72,12 @@
   {% endif %}
 </form>
 {% endblock %}
+
+{% block footer_scripts %}
+  <script nonce="{{ request.csp_nonce }}" src="{% static 'search-v2.js' %}"></script>
+  <script nonce="{{ request.csp_nonce }}">
+    $(document).ready(function() {
+      new ToggleInputClassOnFocus($("#live-search-form"))
+    });
+  </script>
+{% endblock %}
