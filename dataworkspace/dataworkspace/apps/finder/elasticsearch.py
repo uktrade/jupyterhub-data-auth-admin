@@ -63,13 +63,13 @@ class ElasticsearchClient:
             size=0,
         )
 
-        if len(resp['hits']['hits']) == 0:
+        if resp['hits']['total']['value'] == 0:
             results = []
         else:
             results = [
                 _TableMatchResult(
-                    schema=r["key"].split("--")[0],
-                    table=r["key"].split("--")[1],
+                    schema=r["key"].split("--")[1],
+                    table=r["key"].split("--")[2],
                     count=r["doc_count"],
                 )
                 for r in resp["aggregations"]["indexes"]["buckets"]

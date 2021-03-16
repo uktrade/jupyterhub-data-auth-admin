@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from typing import List
 
-import psycopg2
-import psycopg2.extras
+from django.conf import settings
 
-from django.db import connection
+from django.db import connections
 
 from dataworkspace.apps.finder.elasticsearch import _TableMatchResult
 
@@ -25,7 +24,7 @@ def group_matches_by_master(matches: List[_TableMatchResult]) -> List[_DatasetMa
     schemas_and_tables = list({(m.schema, m.table) for m in matches})
 
     table_to_master_map = {}
-    with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+    with connections[settings.DATASET_FINDER_DB_NAME].cursor() as cursor:
         condition = " OR ".join(
             f"(s.schema = '{schema}' AND s.table = '{table}')"
             for schema, table in schemas_and_tables
@@ -39,7 +38,12 @@ def group_matches_by_master(matches: List[_TableMatchResult]) -> List[_DatasetMa
         """
         )
 
-        for r in cursor.fetchall():
+        def _dictfetchall(cursor):
+            "Return all rows from a cursor as a dict"
+            columns = [col[0] for col in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        for r in _dictfetchall(cursor):
             table_to_master_map[(r["schema"], r["table"])] = {
                 "id": r["master_id"],
                 "slug": r["master_slug"],
