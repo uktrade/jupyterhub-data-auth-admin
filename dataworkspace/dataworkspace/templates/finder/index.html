@@ -46,7 +46,7 @@
             <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
             
             <h2 class="govuk-heading-m">
-              <a class="govuk-link" href="https://data.trade.gov.uk/datasets/{{ result.id }}#{{ result.slug }}" target="_blank">
+              <a class="govuk-link" href="{% url 'datasets:dataset_detail' %}#{{ result.slug }}" target="_blank">
                 {{ result.name }}
               </a>
             </h2>
@@ -55,7 +55,7 @@
               <strong>{{ table.count }}</strong> matching rows in "{{ table.schema }}"."{{ table.table }}"
               <br>
               <span class="govuk-hint govuk-!-margin-bottom-0">{{ table.name }}</span>
-              <a class="govuk-link" href="/search-in-data-explorer/{{ table.schema }}/{{ table.table }}?q={{ search_term }}" target="_blank">Open in Data Explorer</a>
+              <a class="govuk-link" href="{% url 'finder:search_in_data_explorer' schema=table.schema table=table.table %}?q={{ search_term }}" target="_blank">Open in Data Explorer</a>
             </p>
             {% endfor %}
           {% endfor %}
