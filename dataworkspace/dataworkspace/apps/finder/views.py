@@ -1,4 +1,4 @@
-from urllib.parse import urlencode
+from urllib.parse import quote
 
 from django.conf import settings
 from django.db import connection
@@ -72,9 +72,8 @@ def search_in_data_explorer(request, schema, table):
 
     condition = f"to_tsvector(concat_ws(',', {tsvector_fragment})) @@ to_tsquery('{phrase_fragment}')"
 
-    sql = f"""SELECT *
+    query = f"""SELECT *
 FROM "{schema}"."{table}"
 WHERE {condition}"""
-    query_param = urlencode({"sql": sql})
 
-    return HttpResponseRedirect(reverse("explorer:index") + f"?{query_param}")
+    return HttpResponseRedirect(f"{reverse('explorer:index')}?sql={quote(query)}")
